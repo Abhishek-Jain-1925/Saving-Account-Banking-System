@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/Abhishek-Jain-1925/Saving-Account-Banking-System/app"
 	"github.com/Abhishek-Jain-1925/Saving-Account-Banking-System/repository"
-	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -17,13 +17,16 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	defer database.Close()
+	//repository.InsertSeedData(database)
 
 	//Initialize Service
 	services := app.NewServices(database)
-	fmt.Println(services)
 
-	//To Routing
-	r := mux.NewRouter()
-	app.Routes(r, database)
+	//Initialize Router
+	router := app.NewRouter(services)
+
+	//Start The Server
+	http.ListenAndServe("localhost:1925", router)
 
 }

@@ -2,25 +2,33 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
+	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var db *sql.DB
 
 func InitializeDB() (*sql.DB, error) {
-	database, err := sql.Open("sqlite3", "../repository/bank.db")
+
+	//Load .env vars
+	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatal("error !! while creating with database !!")
+		log.Print("error !! while loading env vars !! Due to : ", err)
+	}
+
+	database, err := sql.Open("sqlite3", "repository/bank.db")
+	if err != nil {
+		log.Print("error !! while creating with database !!")
 		return nil, err
 	}
 	db = database
-	defer db.Close()
 
 	statement, err := db.Prepare(`
 	CREATE TABLE IF NOT EXISTS user(
-		user_id INTEGER PRIMARY KEY,
+		user_id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name VARCHAR(30) NOT NULL,
 		address VARCHAR(50) NOT NULL,
 		email VARCHAR(30) NOT NULL,
@@ -32,7 +40,7 @@ func InitializeDB() (*sql.DB, error) {
 	)	
 	`)
 	if err != nil {
-		log.Fatalln("error !! while creating user table !! Due to : ", err)
+		log.Print("error !! while creating user table !! Due to : ", err)
 		return nil, err
 	}
 	statement.Exec()
@@ -47,7 +55,7 @@ func InitializeDB() (*sql.DB, error) {
 	)
 	`)
 	if err != nil {
-		log.Fatalln("error !! while creating branch table !! Due to : ", err)
+		log.Print("error !! while creating branch table !! Due to : ", err)
 		return nil, err
 	}
 	statement.Exec()
@@ -66,7 +74,7 @@ func InitializeDB() (*sql.DB, error) {
 	)
 	`)
 	if err != nil {
-		log.Fatalln("error !! while creating account table !! Due to : ", err)
+		log.Print("error !! while creating account table !! Due to : ", err)
 		return nil, err
 	}
 	statement.Exec()
@@ -82,14 +90,35 @@ func InitializeDB() (*sql.DB, error) {
 	)
 	`)
 	if err != nil {
-		log.Fatalln("error !! while creating tbltransaction table !! Due to : ", err)
+		log.Print("error !! while creating tbltransaction table !! Due to : ", err)
 		return nil, err
 	}
 	statement.Exec()
 
-	log.Fatalln("Successfully Initialized Database !!")
+	fmt.Println("Successfully Initialized Database !!")
 
 	statement.Close()
 
 	return db, nil
+}
+
+func InsertSeedData(db *sql.DB) {
+	database, err := sql.Open("sqlite3", "repository/bank.db")
+	if err != nil {
+		log.Print("error !! while Connecting with database !!")
+		return
+	}
+	defer db.Close()
+
+	stmt, err := database.Prepare(`INSERT INTO user VALUES
+	(1, "Abhishek", "Pune", "abc@gmail.com", "pass@123", "9595601925", "customer", 1707391842, 1707391925)`)
+	if err != nil {
+		fmt.Println("errror While inserting 'Seed Data 1' into db !! Due to : ", err)
+		return
+	}
+	stmt.Exec()
+
+	stmt.Close()
+
+	fmt.Println("Seed Data Inserted !!")
 }

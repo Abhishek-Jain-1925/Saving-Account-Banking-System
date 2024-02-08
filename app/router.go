@@ -1,7 +1,6 @@
 package app
 
 import (
-	"database/sql"
 	"net/http"
 
 	"github.com/Abhishek-Jain-1925/Saving-Account-Banking-System/app/account"
@@ -9,21 +8,24 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func Routes(r *mux.Router, db *sql.DB) {
+func NewRouter(deps Dependencies) *mux.Router {
 
+	r := mux.NewRouter()
 	//User Related Activity
-	r.HandleFunc("/login", user.Login).Methods(http.MethodPost)
-	r.HandleFunc("/signup", user.Signup)
-	r.HandleFunc("/updateEndUser", user.UpdateEndUSer)
-	r.HandleFunc("/getUsersList", user.ListEndUser)
+	r.HandleFunc("/login", user.Login(deps.UserService)).Methods(http.MethodPost)
+	r.HandleFunc("/signup", user.Signup(deps.UserService)).Methods(http.MethodPost)
+	r.HandleFunc("/updateEndUser", user.Update)
+	r.HandleFunc("/getUsersList", user.List)
 
 	//Account Related Activity
 	r.HandleFunc("/account/create", account.CreateAccount)
-	r.HandleFunc("/account/deposite", account.Deposite)
+	r.HandleFunc("/account/deposite", account.Deposit)
 	r.HandleFunc("/account/withdraw", account.Withdrawal)
 	r.HandleFunc("/account/delete", account.DeleteAccount)
 	r.HandleFunc("account/statement", account.ViewStatement)
 
 	//Admin Side Activity
 	r.HandleFunc("admin/statement", account.ViewStatement)
+
+	return r
 }

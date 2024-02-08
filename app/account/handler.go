@@ -6,7 +6,7 @@ func CreateAccount(w http.ResponseWriter, r *http.Request) { //POST
 
 }
 
-func Deposite(w http.ResponseWriter, r *http.Request) { //PUT pathparam
+func Deposit(w http.ResponseWriter, r *http.Request) { //PUT pathparam
 
 }
 
