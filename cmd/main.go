@@ -18,7 +18,12 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	//Initialize Service
+	services := app.NewServices(database)
+	fmt.Println(services)
+
 	//To Routing
 	r := mux.NewRouter()
 	app.Routes(r, database)
+
 }
