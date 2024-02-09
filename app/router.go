@@ -15,10 +15,9 @@ func NewRouter(deps Dependencies) *mux.Router {
 	r.HandleFunc("/login", user.Login(deps.UserService)).Methods(http.MethodPost)
 	r.HandleFunc("/signup", user.Signup(deps.UserService)).Methods(http.MethodPost)
 	r.HandleFunc("/updateEndUser", user.Update(deps.UserService)).Methods(http.MethodPut)
-	r.HandleFunc("/getUsersList", user.List)
 
 	//Account Related Activity
-	r.HandleFunc("/account/create", account.CreateAccount)
+	r.HandleFunc("/account/create", account.Create(deps.AccountService)).Methods(http.MethodPost)
 	r.HandleFunc("/account/deposite", account.Deposit)
 	r.HandleFunc("/account/withdraw", account.Withdrawal)
 	r.HandleFunc("/account/delete", account.DeleteAccount)
@@ -26,6 +25,7 @@ func NewRouter(deps Dependencies) *mux.Router {
 
 	//Admin Side Activity
 	r.HandleFunc("admin/statement", account.ViewStatement)
+	r.HandleFunc("/getUsersList", user.List)
 
 	return r
 }

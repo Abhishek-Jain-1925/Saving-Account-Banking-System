@@ -48,8 +48,8 @@ func InitializeDB() (*sql.DB, error) {
 	statement, err = db.Prepare(`
 	CREATE TABLE IF NOT EXISTS branch(
 		id INTEGER PRIMARY KEY,
-		name VARCHAR(20) NOT NULL,
-		location VARCHAR(15) NOT NULL,
+		name VARCHAR(30) NOT NULL,
+		location VARCHAR(30) NOT NULL,
 		created_at INTEGER NOT NULL,
 		updated_at INTEGER NOT NULL
 	)
@@ -110,10 +110,28 @@ func InsertSeedData(db *sql.DB) {
 	}
 	defer db.Close()
 
+	//Seed Data for User
 	stmt, err := database.Prepare(`INSERT INTO user VALUES
 	(1, "Abhishek", "Pune", "abc@gmail.com", "pass@123", "9595601925", "customer", 1707391842, 1707391925)`)
 	if err != nil {
-		fmt.Println("errror While inserting 'Seed Data 1' into db !! Due to : ", err)
+		fmt.Println("errror While inserting User'Seed Data 1' into db !! Due to : ", err)
+		return
+	}
+	stmt.Exec()
+
+	//Seed Data for Branch
+	stmt, err = database.Prepare(`INSERT INTO branch VALUES
+		(1001, "Central Bank Of India", "Shivajinagar Pune", 1707465912,1707465912)`)
+	if err != nil {
+		fmt.Println("errror While inserting Branch'Seed Data 1' into db !! Due to : ", err)
+		return
+	}
+	stmt.Exec()
+
+	stmt, err = database.Prepare(`INSERT INTO branch VALUES
+		(1002, "Central Bank Of India", "Balewadi,Pune", 1707465912,1707465912)`)
+	if err != nil {
+		fmt.Println("errror While inserting Branch'Seed Data 2' into db !! Due to : ", err)
 		return
 	}
 	stmt.Exec()

@@ -47,7 +47,7 @@ func Signup(userService Service) func(w http.ResponseWriter, r *http.Request) { 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			log.Print("error !! while decoding login data from json into struct !!")
+			log.Print("error !! while decoding Signup data from json into struct !!")
 			return
 		}
 
