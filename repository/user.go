@@ -20,6 +20,7 @@ type UserStorer interface {
 
 	GetLoginDetails() (response map[string]string, err error)
 	AddUser(req dto.CreateUser) (response string, err error)
+	UpdateUser(req dto.UpdateUser) (response string, err error)
 }
 
 // All info want to process on DB
@@ -70,5 +71,23 @@ func (db *UserStore) AddUser(req dto.CreateUser) (response string, err error) {
 		return "", fmt.Errorf("errror While inserting sign-up data in db")
 	}
 	stmt.Exec(1, req.Name, req.Address, req.Email, req.Password, req.Mobile, req.Role, time.Now().Unix(), time.Now().Unix())
+
 	return "Signed up Successfully !!", nil
+}
+
+func (db *UserStore) UpdateUser(req dto.UpdateUser) (response string, err error) {
+
+	// For Updating User Info.
+	stmt, err := db.DB.Prepare(`UPDATE user SET name=?, address=?, password=?, mobile=?, updated_at=? WHERE user_id=?`)
+	if err != nil {
+		return "", fmt.Errorf("error while updating user data in db: %v", err)
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(req.Name, req.Address, req.Password, req.Mobile, time.Now().Unix(), req.User_id)
+	if err != nil {
+		return "", fmt.Errorf("error executing update statement: %v", err)
+	}
+
+	return "\nUser Info Updated Successfully !!", nil
 }

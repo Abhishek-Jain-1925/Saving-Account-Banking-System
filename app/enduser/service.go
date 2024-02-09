@@ -21,8 +21,10 @@ var Map1 = map[string]string{
 
 // All User related funcs that processing From DB in Bussiness Logic
 type Service interface {
+	Authenticate(tknStr string) (response string, err error)
 	CreateLogin(req dto.CreateLoginRequest) (res string, err error)
 	CreateSignup(req dto.CreateUser) (res string, err error)
+	UpdateUser(req dto.UpdateUser) (response string, err error)
 }
 
 func NewService(UserRepo repository.UserStorer) Service {
@@ -68,6 +70,33 @@ func (us *service) CreateLogin(req dto.CreateLoginRequest) (res string, err erro
 func (us *service) CreateSignup(req dto.CreateUser) (res string, err error) {
 
 	response, err := us.UserRepo.AddUser(req)
+	if err != nil {
+		return "", err
+	}
+
+	return response, nil
+}
+
+func (us *service) Authenticate(tknStr string) (response string, err error) {
+
+	jwtkey := []byte(os.Getenv("jwtkey"))
+	claims := &dto.Claims{}
+
+	tkn, err := jwt.ParseWithClaims(tknStr, claims, func(t *jwt.Token) (interface{}, error) {
+		return jwtkey, nil
+	})
+	if err != nil {
+		return "", fmt.Errorf("error in parsing claims")
+	}
+
+	if !tkn.Valid {
+		return "", fmt.Errorf("invalid token")
+	}
+	return claims.Username, nil
+}
+
+func (us *service) UpdateUser(req dto.UpdateUser) (response string, err error) {
+	response, err = us.UserRepo.UpdateUser(req)
 	if err != nil {
 		return "", err
 	}

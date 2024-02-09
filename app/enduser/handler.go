@@ -2,6 +2,7 @@ package enduser
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -66,8 +67,43 @@ func Signup(userService Service) func(w http.ResponseWriter, r *http.Request) { 
 	}
 }
 
-func Update(w http.ResponseWriter, r *http.Request) { //Post
+func Update(userService Service) func(w http.ResponseWriter, r *http.Request) { //PUT
+	return func(w http.ResponseWriter, r *http.Request) {
 
+		tknStr := r.Header.Get("Authorization")
+
+		response, err := userService.Authenticate(tknStr)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("Plz, Do Login First !!"))
+			log.Print(err)
+			return
+		}
+		w.Write([]byte(fmt.Sprintf("Hello, %s", response)))
+
+		//Updating User Info
+		var req dto.UpdateUser
+		err = json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			log.Print("error !! while decoding Update data from json into struct !!")
+			return
+		}
+
+		err = req.ValidateUpdate()
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("Error...while Validating input !! Plz, Provide Valid Credentials !!"))
+			return
+		}
+
+		response, err = userService.UpdateUser(req)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.Write([]byte(response))
+	}
 }
 
 func List(w http.ResponseWriter, r *http.Request) { //Post
