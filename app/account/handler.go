@@ -46,12 +46,81 @@ func Create(accService Service) func(w http.ResponseWriter, r *http.Request) { /
 	}
 }
 
-func Deposit(w http.ResponseWriter, r *http.Request) { //PUT pathparam
+func Deposit(accService Service) func(w http.ResponseWriter, r *http.Request) { //Post
+	return func(w http.ResponseWriter, r *http.Request) {
 
+		tknStr := r.Header.Get("Authorization")
+		response, err := accService.Authenticate(tknStr)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("Plz, Do Login First !!"))
+			log.Print(err)
+			return
+		}
+		w.Write([]byte(fmt.Sprintf("Hello, %s", response)))
+
+		var req dto.Transaction
+		err = json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			log.Print("error !! while creating Account data from json into struct !!")
+			return
+		}
+
+		err = req.ValidateTransaction()
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("\n Error...while Validating input !! Plz, Provide Valid Credentials !!"))
+			return
+		}
+
+		response, err = accService.DepositMoney(req)
+		if err != nil {
+			res := fmt.Sprintf("\nCAUTION : %v", err)
+			w.Write([]byte(res))
+			return
+		}
+		w.Write([]byte(response))
+	}
 }
 
-func Withdrawal(w http.ResponseWriter, r *http.Request) { //PUT pathparam
+func Withdrawal(accService Service) func(w http.ResponseWriter, r *http.Request) { //Post
+	return func(w http.ResponseWriter, r *http.Request) {
 
+		tknStr := r.Header.Get("Authorization")
+		response, err := accService.Authenticate(tknStr)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("Plz, Do Login First !!"))
+			log.Print(err)
+			return
+		}
+		w.Write([]byte(fmt.Sprintf("Hello, %s", response)))
+
+		var req dto.Transaction
+		err = json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			log.Print("error !! while creating Account data from json into struct !!")
+			return
+		}
+
+		err = req.ValidateTransaction()
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("\n Error...while Validating input !! Plz, Provide Valid Credentials !!"))
+			return
+		}
+
+		response, err = accService.WithdrawalMoney(req)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			res := fmt.Sprintf("\nCAUTION : %v", err)
+			w.Write([]byte(res))
+			return
+		}
+		w.Write([]byte(response))
+	}
 }
 
 func Delete(accService Service) func(w http.ResponseWriter, r *http.Request) { //Post

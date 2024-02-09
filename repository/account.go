@@ -19,6 +19,8 @@ type AccountStorer interface {
 
 	CreateAccount(req dto.CreateAccountReq) (response string, err error)
 	DeleteAccount(req dto.DeleteAccountReq) (response string, err error)
+	DepositMoney(req dto.Transaction) (response string, err error)
+	WithdrawalMoney(req dto.Transaction) (response string, err error)
 }
 
 // To store all account related info in DB
@@ -60,4 +62,61 @@ func (db *AccountStore) DeleteAccount(req dto.DeleteAccountReq) (response string
 	stmt.Exec(req.Account_no, req.User_id)
 
 	return "\n Account Deleted Successfully !!", nil
+}
+
+func (db *AccountStore) DepositMoney(req dto.Transaction) (response string, err error) {
+
+	//For Deposit Money
+	var balance float64
+	row := db.DB.QueryRow("SELECT balance FROM account WHERE acc_no = ?", req.Account_no)
+	err = row.Scan(&balance)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("no Record found")
+		}
+		return "", fmt.Errorf("something went wrong")
+	}
+	resStr := fmt.Sprintf("\n Current Balance : %f", balance)
+
+	TotalBal := balance + req.Amount
+
+	stmt, err := db.DB.Prepare(`UPDATE account SET balance=? WHERE acc_no=?`)
+	if err != nil {
+		return "", fmt.Errorf("errror While inserting CreateAccount data in db")
+	}
+	stmt.Exec(TotalBal, req.Account_no)
+	resStr += "\n*** Money Deposited Successfully ***"
+	resStr += fmt.Sprintf("\n New Total Balance : %f", TotalBal)
+	return resStr, nil
+}
+
+func (db *AccountStore) WithdrawalMoney(req dto.Transaction) (response string, err error) {
+
+	//For Withdrawal
+	var balance float64
+	row := db.DB.QueryRow("SELECT balance FROM account WHERE acc_no = ?", req.Account_no)
+	err = row.Scan(&balance)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			fmt.Println("No record found !!")
+			return
+		}
+		return
+	}
+	if balance < req.Amount {
+		return "", fmt.Errorf("insufficient balance")
+	}
+	resStr := fmt.Sprintf("\n Current Balance : %.2f", balance)
+
+	TotalBal := balance - req.Amount
+
+	stmt, err := db.DB.Prepare(`UPDATE account SET balance=? WHERE acc_no=?`)
+	if err != nil {
+		return "", fmt.Errorf("errror While inserting CreateAccount data in db")
+	}
+	stmt.Exec(TotalBal, req.Account_no)
+
+	resStr += "\n*** Money Withdrawal Successfully ***"
+	resStr += fmt.Sprintf("\n New Total Balance : %.2f", TotalBal)
+	return resStr, nil
 }

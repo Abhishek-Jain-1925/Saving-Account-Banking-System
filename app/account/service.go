@@ -17,6 +17,8 @@ type Service interface {
 	Authenticate(tknStr string) (response string, err error)
 	CreateAccount(req dto.CreateAccountReq) (res string, err error)
 	DeleteAccount(req dto.DeleteAccountReq) (res string, err error)
+	DepositMoney(req dto.Transaction) (res string, err error)
+	WithdrawalMoney(req dto.Transaction) (res string, err error)
 }
 
 func NewService(AccountRepo repository.AccountStorer) Service {
@@ -50,7 +52,6 @@ func (as *service) CreateAccount(req dto.CreateAccountReq) (res string, err erro
 	if err != nil {
 		return "", err
 	}
-
 	return response, nil
 }
 
@@ -60,6 +61,21 @@ func (as *service) DeleteAccount(req dto.DeleteAccountReq) (res string, err erro
 	if err != nil {
 		return "", err
 	}
+	return response, nil
+}
 
+func (as *service) DepositMoney(req dto.Transaction) (res string, err error) {
+	response, err := as.AccountRepo.DepositMoney(req)
+	if err != nil {
+		return "", err
+	}
+	return response, nil
+}
+
+func (as *service) WithdrawalMoney(req dto.Transaction) (res string, err error) {
+	response, err := as.AccountRepo.WithdrawalMoney(req)
+	if err != nil {
+		return "", err
+	}
 	return response, nil
 }
