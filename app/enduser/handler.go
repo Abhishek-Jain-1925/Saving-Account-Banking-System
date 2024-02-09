@@ -36,7 +36,9 @@ func Login(userService Service) func(w http.ResponseWriter, r *http.Request) { /
 			return
 		}
 
-		w.Write([]byte(response))
+		resStr := "*** Logged in successfully ***"
+		resStr += fmt.Sprintf("\n\n Your Token for further Banking : \n%v", response)
+		w.Write([]byte(resStr))
 	}
 }
 
@@ -54,7 +56,8 @@ func Signup(userService Service) func(w http.ResponseWriter, r *http.Request) { 
 		err = req.ValidateUser()
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("Error...while Validating input !! Plz, Provide Valid Credentials !!"))
+			response := fmt.Sprintf("Plz, Provide Valid Credentials !! \nCAUTION : %v", err)
+			w.Write([]byte(response))
 			return
 		}
 
@@ -93,7 +96,8 @@ func Update(userService Service) func(w http.ResponseWriter, r *http.Request) { 
 		err = req.ValidateUpdate()
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("Error...while Validating input !! Plz, Provide Valid Credentials !!"))
+			response := fmt.Sprintf("Plz, Provide Valid Credentials !! \nCAUTION : %v", err)
+			w.Write([]byte(response))
 			return
 		}
 

@@ -73,7 +73,6 @@ func (us *service) CreateSignup(req dto.CreateUser) (res string, err error) {
 	if err != nil {
 		return "", err
 	}
-
 	return response, nil
 }
 

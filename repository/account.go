@@ -42,22 +42,49 @@ func NewAccountRepo(db *sql.DB) AccountStorer {
 
 func (db *AccountStore) CreateAccount(req dto.CreateAccountReq) (response string, err error) {
 
+	//To get Existing value
+	var count int64
+	row := db.DB.QueryRow("SELECT MAX(user_id) FROM account")
+	err = row.Scan(&count)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			count = 0
+		}
+		return "", fmt.Errorf("something went wrong")
+	}
 	//For Inserting
 	stmt, err := db.DB.Prepare(`INSERT INTO account VALUES(?,?,?,?,?,?,?)`)
 	if err != nil {
 		return "", fmt.Errorf("errror While inserting CreateAccount data in db")
 	}
-	stmt.Exec(101, req.User_id, req.Branch_id, req.Account_type, req.Balance, time.Now().Unix(), time.Now().Unix())
+	acc_no := (count + 1)
+	stmt.Exec(acc_no, req.User_id, req.Branch_id, req.Account_type, req.Balance, time.Now().Unix(), time.Now().Unix())
+	resStr := "\n *** Account Created Successfully ***"
+	resStr += "\n\n Kindly Note following details -"
+	resStr += fmt.Sprintf("\n- Account Number : %v", acc_no)
+	resStr += fmt.Sprintf("\n- Account Type : %v", req.Account_type)
+	resStr += fmt.Sprintf("\n- Branch ID : %v", req.Branch_id)
+	resStr += fmt.Sprintf("\n- User ID : %v", req.User_id)
 
-	return "\n Account Created Successfully !!", nil
+	return resStr, nil
 }
 
 func (db *AccountStore) DeleteAccount(req dto.DeleteAccountReq) (response string, err error) {
 
+	var count int64
+	row := db.DB.QueryRow("SELECT user_id FROM account where acc_no=?", req.Account_no)
+	err = row.Scan(&count)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("record not found, plz provide valid data")
+		}
+		return "", fmt.Errorf("something went wrong")
+	}
+
 	//For Inserting
 	stmt, err := db.DB.Prepare(`DELETE FROM account WHERE acc_no=? AND user_id=?`)
 	if err != nil {
-		return "", fmt.Errorf("errror While inserting CreateAccount data in db")
+		return "", fmt.Errorf("errror While deleting data from db")
 	}
 	stmt.Exec(req.Account_no, req.User_id)
 
@@ -76,7 +103,7 @@ func (db *AccountStore) DepositMoney(req dto.Transaction) (response string, err 
 		}
 		return "", fmt.Errorf("something went wrong")
 	}
-	resStr := fmt.Sprintf("\n Current Balance : %f", balance)
+	resStr := fmt.Sprintf("\n Current Balance : %.2f", balance)
 
 	TotalBal := balance + req.Amount
 
@@ -86,7 +113,7 @@ func (db *AccountStore) DepositMoney(req dto.Transaction) (response string, err 
 	}
 	stmt.Exec(TotalBal, req.Account_no)
 	resStr += "\n*** Money Deposited Successfully ***"
-	resStr += fmt.Sprintf("\n New Total Balance : %f", TotalBal)
+	resStr += fmt.Sprintf("\n New Total Balance : %.2f", TotalBal)
 	return resStr, nil
 }
 

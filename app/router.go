@@ -14,7 +14,7 @@ func NewRouter(deps Dependencies) *mux.Router {
 	//User Related Activity
 	r.HandleFunc("/login", user.Login(deps.UserService)).Methods(http.MethodPost)
 	r.HandleFunc("/signup", user.Signup(deps.UserService)).Methods(http.MethodPost)
-	r.HandleFunc("/updateEndUser", user.Update(deps.UserService)).Methods(http.MethodPut)
+	r.HandleFunc("/updateUser", user.Update(deps.UserService)).Methods(http.MethodPut)
 
 	//Account Related Activity
 	r.HandleFunc("/account/create", account.Create(deps.AccountService)).Methods(http.MethodPost)

@@ -63,7 +63,7 @@ func (req *CreateUser) ValidateUser() error {
 	if len(req.Password) < 3 || len(req.Password) > 16 {
 		return fmt.Errorf("length of the password field must be between 3 and 16 characters")
 	}
-	if len(req.Mobile) <= 0 || len(req.Mobile) >= 10 {
+	if len(req.Mobile) <= 0 {
 		return fmt.Errorf("mobile field cannot be empty")
 	}
 	if len(req.Role) <= 0 || (req.Role != "Customer" && req.Role != "Admin") {
@@ -92,7 +92,7 @@ func (req *UpdateUser) ValidateUpdate() error {
 	if len(req.Password) < 3 || len(req.Password) > 16 {
 		return fmt.Errorf("length of the password field must be between 3 and 16 characters")
 	}
-	if len(req.Mobile) <= 0 || len(req.Mobile) >= 10 {
+	if len(req.Mobile) <= 0 {
 		return fmt.Errorf("mobile field cannot be empty")
 	}
 	return nil

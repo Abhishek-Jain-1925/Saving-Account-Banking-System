@@ -65,14 +65,32 @@ func (db *UserStore) GetLoginDetails() (response map[string]string, err error) {
 
 func (db *UserStore) AddUser(req dto.CreateUser) (response string, err error) {
 
+	//To get Existing value
+	var count int64
+	row := db.DB.QueryRow("SELECT MAX(user_id) FROM user")
+	err = row.Scan(&count)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			count = 0
+		}
+		return "", fmt.Errorf("something went wrong")
+	}
 	//For Inserting
 	stmt, err := db.DB.Prepare(`INSERT INTO user VALUES(?,?,?,?,?,?,?,?,?)`)
 	if err != nil {
 		return "", fmt.Errorf("errror While inserting sign-up data in db")
 	}
-	stmt.Exec(1, req.Name, req.Address, req.Email, req.Password, req.Mobile, req.Role, time.Now().Unix(), time.Now().Unix())
+	stmt.Exec((count + 1), req.Name, req.Address, req.Email, req.Password, req.Mobile, req.Role, time.Now().Unix(), time.Now().Unix())
 
-	return "Signed up Successfully !!", nil
+	resStr := "\n *** Signed Up Successfully ***"
+	resStr += "\n\n Kindly Note following details -"
+	resStr += fmt.Sprintf("\n- User ID : %v", (count + 1))
+	resStr += fmt.Sprintf("\n- Email(username) : %v", req.Email)
+	resStr += fmt.Sprintf("\n- Password : %v", req.Password)
+	resStr += fmt.Sprintf("\n- Role : %v", req.Role)
+	resStr += "\n\n*** You can login now. ***"
+
+	return resStr, nil
 }
 
 func (db *UserStore) UpdateUser(req dto.UpdateUser) (response string, err error) {

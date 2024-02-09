@@ -76,6 +76,7 @@ func Deposit(accService Service) func(w http.ResponseWriter, r *http.Request) { 
 
 		response, err = accService.DepositMoney(req)
 		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
 			res := fmt.Sprintf("\nCAUTION : %v", err)
 			w.Write([]byte(res))
 			return
@@ -153,6 +154,8 @@ func Delete(accService Service) func(w http.ResponseWriter, r *http.Request) { /
 		response, err = accService.DeleteAccount(req)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
+			response := fmt.Sprintf("\nCAUTION : %v", err)
+			w.Write([]byte(response))
 			return
 		}
 		w.Write([]byte(response))

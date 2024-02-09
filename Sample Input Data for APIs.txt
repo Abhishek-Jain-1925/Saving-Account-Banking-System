@@ -1,0 +1,44 @@
+//Signup
+{
+	"name":"Abhishek Jain",
+	"mobile":"9696969696",
+	"email":"abhishek1925@gmail.com",
+	"password":"Aavej@4264",
+	"address":"Pune,MH",
+	"role":"Customer"
+}
+
+//Login
+{
+	"username":"abc@gmail.com",
+	"password":"Abhi@1925"
+}
+
+//For Update User
+{
+  "user_id":1,
+  "name":"Abhishek Jain",
+  "address":"BMT",
+  "password":"Abhi@1925",
+  "mobile":"8785898486"
+}
+
+//Create Bank Account
+{
+  "user_id":1,
+  "branch_id":1001,
+  "acc_type":"Savings",
+  "balance":500.00
+}
+
+//Delete Account
+{
+  "user_id":1,
+  "acc_no":101
+}
+
+//Debit / Credit Money
+{
+  "acc_no":100,
+  "amount":1500.00
+}
