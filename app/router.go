@@ -20,7 +20,7 @@ func NewRouter(deps Dependencies) *mux.Router {
 	r.HandleFunc("/account/create", account.Create(deps.AccountService)).Methods(http.MethodPost)
 	r.HandleFunc("/account/deposite", account.Deposit)
 	r.HandleFunc("/account/withdraw", account.Withdrawal)
-	r.HandleFunc("/account/delete", account.DeleteAccount)
+	r.HandleFunc("/account/delete", account.Delete(deps.AccountService)).Methods(http.MethodDelete)
 	r.HandleFunc("account/statement", account.ViewStatement)
 
 	//Admin Side Activity

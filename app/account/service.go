@@ -16,6 +16,7 @@ type service struct {
 type Service interface {
 	Authenticate(tknStr string) (response string, err error)
 	CreateAccount(req dto.CreateAccountReq) (res string, err error)
+	DeleteAccount(req dto.DeleteAccountReq) (res string, err error)
 }
 
 func NewService(AccountRepo repository.AccountStorer) Service {
@@ -46,6 +47,16 @@ func (us *service) Authenticate(tknStr string) (response string, err error) {
 func (as *service) CreateAccount(req dto.CreateAccountReq) (res string, err error) {
 
 	response, err := as.AccountRepo.CreateAccount(req)
+	if err != nil {
+		return "", err
+	}
+
+	return response, nil
+}
+
+func (as *service) DeleteAccount(req dto.DeleteAccountReq) (res string, err error) {
+
+	response, err := as.AccountRepo.DeleteAccount(req)
 	if err != nil {
 		return "", err
 	}

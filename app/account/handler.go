@@ -54,8 +54,41 @@ func Withdrawal(w http.ResponseWriter, r *http.Request) { //PUT pathparam
 
 }
 
-func DeleteAccount(w http.ResponseWriter, r *http.Request) { //Delete
+func Delete(accService Service) func(w http.ResponseWriter, r *http.Request) { //Post
+	return func(w http.ResponseWriter, r *http.Request) {
 
+		tknStr := r.Header.Get("Authorization")
+		response, err := accService.Authenticate(tknStr)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte("Plz, Do Login First !!"))
+			log.Print(err)
+			return
+		}
+		w.Write([]byte(fmt.Sprintf("Hello, %s", response)))
+
+		var req dto.DeleteAccountReq
+		err = json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			log.Print("error !! while creating Account data from json into struct !!")
+			return
+		}
+
+		err = req.ValidateDeleteReq()
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("\n Error...while Validating input !! Plz, Provide Valid Credentials !!"))
+			return
+		}
+		response, err = accService.DeleteAccount(req)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.Write([]byte(response))
+		w.Write([]byte("\n\n Thank You For Banking With Us !! \n We are looking forward for your feedback to improve our Banking Facility !!"))
+	}
 }
 
 func ViewStatement(w http.ResponseWriter, r *http.Request) { //GET pathparam

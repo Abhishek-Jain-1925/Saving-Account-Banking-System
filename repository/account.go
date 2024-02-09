@@ -18,6 +18,7 @@ type AccountStorer interface {
 	RepositoryTrasanctions
 
 	CreateAccount(req dto.CreateAccountReq) (response string, err error)
+	DeleteAccount(req dto.DeleteAccountReq) (response string, err error)
 }
 
 // To store all account related info in DB
@@ -44,7 +45,19 @@ func (db *AccountStore) CreateAccount(req dto.CreateAccountReq) (response string
 	if err != nil {
 		return "", fmt.Errorf("errror While inserting CreateAccount data in db")
 	}
-	stmt.Exec(100, req.User_id, req.Branch_id, req.Account_type, req.Balance, time.Now().Unix(), time.Now().Unix())
+	stmt.Exec(101, req.User_id, req.Branch_id, req.Account_type, req.Balance, time.Now().Unix(), time.Now().Unix())
 
-	return "Account Created Successfully !!", nil
+	return "\n Account Created Successfully !!", nil
+}
+
+func (db *AccountStore) DeleteAccount(req dto.DeleteAccountReq) (response string, err error) {
+
+	//For Inserting
+	stmt, err := db.DB.Prepare(`DELETE FROM account WHERE acc_no=? AND user_id=?`)
+	if err != nil {
+		return "", fmt.Errorf("errror While inserting CreateAccount data in db")
+	}
+	stmt.Exec(req.Account_no, req.User_id)
+
+	return "\n Account Deleted Successfully !!", nil
 }
