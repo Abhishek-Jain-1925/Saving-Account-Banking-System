@@ -14,6 +14,8 @@ type CreateLoginRequest struct {
 
 type Claims struct {
 	Username string `json:"username"`
+	User_id  int
+	Role     string
 	jwt.StandardClaims
 }
 
@@ -27,11 +29,21 @@ type CreateUser struct {
 }
 
 type UpdateUser struct {
-	User_id  int    `json:"user_id"`
+	User_id  int    `json:"user_id,omitempty"`
 	Name     string `json:"name"`
 	Address  string `json:"address"`
 	Password string `json:"password"`
 	Mobile   string `json:"mobile"`
+}
+
+type Response struct {
+	User_id  int    `json:"user_id"`
+	Name     string `json:"name"`
+	Address  string `json:"address"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Mobile   string `json:"mobile"`
+	Role     string `json:"role"`
 }
 
 func (req *CreateLoginRequest) Validate() error {
@@ -74,7 +86,7 @@ func (req *CreateUser) ValidateUser() error {
 }
 
 func isValidEmail(email string) bool {
-	//provides a basic check
+	//a basic check
 	regex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 	return regexp.MustCompile(regex).MatchString(email)
 }

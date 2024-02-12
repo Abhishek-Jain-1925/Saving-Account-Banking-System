@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Abhishek-Jain-1925/Saving-Account-Banking-System/app/account"
+	"github.com/Abhishek-Jain-1925/Saving-Account-Banking-System/app/admin"
 	user "github.com/Abhishek-Jain-1925/Saving-Account-Banking-System/app/enduser"
 	"github.com/gorilla/mux"
 )
@@ -14,7 +15,7 @@ func NewRouter(deps Dependencies) *mux.Router {
 	//User Related Activity
 	r.HandleFunc("/login", user.Login(deps.UserService)).Methods(http.MethodPost)
 	r.HandleFunc("/signup", user.Signup(deps.UserService)).Methods(http.MethodPost)
-	r.HandleFunc("/updateUser", user.Update(deps.UserService)).Methods(http.MethodPut)
+	r.HandleFunc("/update_user", user.Update(deps.UserService)).Methods(http.MethodPut)
 
 	//Account Related Activity
 	r.HandleFunc("/account/create", account.Create(deps.AccountService)).Methods(http.MethodPost)
@@ -25,7 +26,8 @@ func NewRouter(deps Dependencies) *mux.Router {
 
 	//Admin Side Activity
 	r.HandleFunc("admin/statement", account.ViewStatement)
-	r.HandleFunc("/getUsersList", user.List)
+	r.HandleFunc("/admin/user_list", admin.ListUsers(deps.AdminService)).Methods(http.MethodGet)
+	r.HandleFunc("/admin/update_user", admin.Update(deps.AdminService)).Methods(http.MethodPut)
 
 	return r
 }

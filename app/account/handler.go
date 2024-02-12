@@ -11,16 +11,17 @@ import (
 
 func Create(accService Service) func(w http.ResponseWriter, r *http.Request) { //Post
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 
 		tknStr := r.Header.Get("Authorization")
-		response, err := accService.Authenticate(tknStr)
+		user_id, _, err := accService.Authenticate(tknStr)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("Plz, Do Login First !!"))
 			log.Print(err)
 			return
 		}
-		w.Write([]byte(fmt.Sprintf("Hello, %s", response)))
+		//w.Write([]byte(fmt.Sprintf("Hello, %s", response)))
 
 		var req dto.CreateAccountReq
 		err = json.NewDecoder(r.Body).Decode(&req)
@@ -37,27 +38,34 @@ func Create(accService Service) func(w http.ResponseWriter, r *http.Request) { /
 			return
 		}
 
-		response, err = accService.CreateAccount(req)
+		result, err := accService.CreateAccount(ctx, req, user_id)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
+			log.Println(err)
 			return
 		}
-		w.Write([]byte(response))
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		// w.Write([]byte(response))
 	}
 }
 
 func Deposit(accService Service) func(w http.ResponseWriter, r *http.Request) { //Post
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 
 		tknStr := r.Header.Get("Authorization")
-		response, err := accService.Authenticate(tknStr)
+		user_id, _, err := accService.Authenticate(tknStr)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("Plz, Do Login First !!"))
 			log.Print(err)
 			return
 		}
-		w.Write([]byte(fmt.Sprintf("Hello, %s", response)))
+		// w.Write([]byte(fmt.Sprintf("Hello, %s", response)))
 
 		var req dto.Transaction
 		err = json.NewDecoder(r.Body).Decode(&req)
@@ -74,22 +82,28 @@ func Deposit(accService Service) func(w http.ResponseWriter, r *http.Request) { 
 			return
 		}
 
-		response, err = accService.DepositMoney(req)
+		//var result dto.Transaction
+		result, err := accService.DepositMoney(ctx, req, user_id)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			res := fmt.Sprintf("\nCAUTION : %v", err)
 			w.Write([]byte(res))
 			return
 		}
-		w.Write([]byte(response))
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 	}
 }
 
-func Withdrawal(accService Service) func(w http.ResponseWriter, r *http.Request) { //Post
+func Withdrawal(accService Service) func(w http.ResponseWriter, r *http.Request) { //PUT
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 
 		tknStr := r.Header.Get("Authorization")
-		response, err := accService.Authenticate(tknStr)
+		user_id, response, err := accService.Authenticate(tknStr)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("Plz, Do Login First !!"))
@@ -113,22 +127,27 @@ func Withdrawal(accService Service) func(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		response, err = accService.WithdrawalMoney(req)
+		result, err := accService.WithdrawalMoney(ctx, req, user_id)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			res := fmt.Sprintf("\nCAUTION : %v", err)
 			w.Write([]byte(res))
 			return
 		}
-		w.Write([]byte(response))
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		// w.Write([]byte(response))
 	}
 }
 
 func Delete(accService Service) func(w http.ResponseWriter, r *http.Request) { //Post
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 
 		tknStr := r.Header.Get("Authorization")
-		response, err := accService.Authenticate(tknStr)
+		user_id, response, err := accService.Authenticate(tknStr)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("Plz, Do Login First !!"))
@@ -151,7 +170,7 @@ func Delete(accService Service) func(w http.ResponseWriter, r *http.Request) { /
 			w.Write([]byte("\n Error...while Validating input !! Plz, Provide Valid Credentials !!"))
 			return
 		}
-		response, err = accService.DeleteAccount(req)
+		response, err = accService.DeleteAccount(ctx, req, user_id)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			response := fmt.Sprintf("\nCAUTION : %v", err)

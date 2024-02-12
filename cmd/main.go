@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,6 +11,10 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+	log.Print(ctx, "=> Starting Banking Application...")
+	defer log.Print(ctx, "=> Shutting Down Banking Application...")
+
 	fmt.Println("*** WELCOME to BANKING SYSTEM !! ***")
 
 	//To Initialize Database
@@ -18,7 +23,7 @@ func main() {
 		log.Fatalln(err)
 	}
 	defer database.Close()
-	// repository.InsertSeedData(database)
+	//repository.InsertSeedData(database)
 
 	//Initialize Service
 	services := app.NewServices(database)

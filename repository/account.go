@@ -17,21 +17,10 @@ type AccountStore struct {
 type AccountStorer interface {
 	RepositoryTrasanctions
 
-	CreateAccount(req dto.CreateAccountReq) (response string, err error)
-	DeleteAccount(req dto.DeleteAccountReq) (response string, err error)
-	DepositMoney(req dto.Transaction) (response string, err error)
-	WithdrawalMoney(req dto.Transaction) (response string, err error)
-}
-
-// To store all account related info in DB
-type Account struct {
-	Acc_no     int
-	User_id    int
-	Branch_id  int
-	Acc_type   string
-	Balance    float64
-	Created_at int
-	Updated_at int
+	CreateAccount(req dto.CreateAccountReq, user_id int) (dto.CreateAccountReq, error)
+	DeleteAccount(req dto.DeleteAccountReq, user_id int) (response string, err error)
+	DepositMoney(req dto.Transaction, user_id int) (dto.Transaction, error)
+	WithdrawalMoney(req dto.Transaction, user_id int) (dto.Transaction, error)
 }
 
 func NewAccountRepo(db *sql.DB) AccountStorer {
@@ -40,39 +29,46 @@ func NewAccountRepo(db *sql.DB) AccountStorer {
 	}
 }
 
-func (db *AccountStore) CreateAccount(req dto.CreateAccountReq) (response string, err error) {
+func (db *AccountStore) CreateAccount(req dto.CreateAccountReq, user_id int) (dto.CreateAccountReq, error) {
 
 	//To get Existing value
 	var count int64
-	row := db.DB.QueryRow("SELECT MAX(user_id) FROM account")
-	err = row.Scan(&count)
+	QueryExecuter := db.initiateQueryExecutor(db.DB)
+	row := QueryExecuter.QueryRow("SELECT MAX(acc_no) FROM account")
+	err := row.Scan(&count)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			count = 0
+			count = 100
 		}
-		return "", fmt.Errorf("something went wrong")
 	}
 	//For Inserting
-	stmt, err := db.DB.Prepare(`INSERT INTO account VALUES(?,?,?,?,?,?,?)`)
+	stmt, err := QueryExecuter.Prepare(`INSERT INTO account VALUES(?,?,?,?,?,?,?)`)
 	if err != nil {
-		return "", fmt.Errorf("errror While inserting CreateAccount data in db")
+		return dto.CreateAccountReq{}, fmt.Errorf("errror While inserting CreateAccount data in db")
 	}
 	acc_no := (count + 1)
-	stmt.Exec(acc_no, req.User_id, req.Branch_id, req.Account_type, req.Balance, time.Now().Unix(), time.Now().Unix())
-	resStr := "\n *** Account Created Successfully ***"
-	resStr += "\n\n Kindly Note following details -"
-	resStr += fmt.Sprintf("\n- Account Number : %v", acc_no)
-	resStr += fmt.Sprintf("\n- Account Type : %v", req.Account_type)
-	resStr += fmt.Sprintf("\n- Branch ID : %v", req.Branch_id)
-	resStr += fmt.Sprintf("\n- User ID : %v", req.User_id)
+	stmt.Exec(acc_no, user_id, req.Branch_id, req.Account_type, req.Balance, time.Now().Unix(), time.Now().Unix())
+	// resStr := "\n *** Account Created Successfully ***"
+	// resStr += "\n\n Kindly Note following details -"
+	// resStr += fmt.Sprintf("\n- Account Number : %v", acc_no)
+	// resStr += fmt.Sprintf("\n- Account Type : %v", req.Account_type)
+	// resStr += fmt.Sprintf("\n- Branch ID : %v", req.Branch_id)
+	// resStr += fmt.Sprintf("\n- User ID : %v", user_id)
 
-	return resStr, nil
+	var res dto.CreateAccountReq
+	res.Account_no = int(acc_no)
+	res.Account_type = req.Account_type
+	res.Balance = req.Balance
+	res.Branch_id = req.Branch_id
+	res.User_id = user_id
+
+	return res, nil
 }
 
-func (db *AccountStore) DeleteAccount(req dto.DeleteAccountReq) (response string, err error) {
-
+func (db *AccountStore) DeleteAccount(req dto.DeleteAccountReq, user_id int) (response string, err error) {
 	var count int64
-	row := db.DB.QueryRow("SELECT user_id FROM account where acc_no=?", req.Account_no)
+	QueryExecuter := db.initiateQueryExecutor(db.DB)
+	row := QueryExecuter.QueryRow("SELECT user_id FROM account where acc_no=? AND user_id=?", req.Account_no, user_id)
 	err = row.Scan(&count)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -82,68 +78,73 @@ func (db *AccountStore) DeleteAccount(req dto.DeleteAccountReq) (response string
 	}
 
 	//For Inserting
-	stmt, err := db.DB.Prepare(`DELETE FROM account WHERE acc_no=? AND user_id=?`)
+	stmt, err := QueryExecuter.Prepare(`DELETE FROM account WHERE acc_no=? AND user_id=?`)
 	if err != nil {
 		return "", fmt.Errorf("errror While deleting data from db")
 	}
-	stmt.Exec(req.Account_no, req.User_id)
-
+	stmt.Exec(req.Account_no, user_id)
 	return "\n Account Deleted Successfully !!", nil
 }
 
-func (db *AccountStore) DepositMoney(req dto.Transaction) (response string, err error) {
+func (db *AccountStore) DepositMoney(req dto.Transaction, user_id int) (dto.Transaction, error) {
 
 	//For Deposit Money
+	QueryExecuter := db.initiateQueryExecutor(db.DB)
 	var balance float64
-	row := db.DB.QueryRow("SELECT balance FROM account WHERE acc_no = ?", req.Account_no)
-	err = row.Scan(&balance)
+	var res dto.Transaction
+	row := QueryExecuter.QueryRow("SELECT balance FROM account WHERE acc_no = ? AND user_id=?", req.Account_no, user_id)
+	err := row.Scan(&balance)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "", fmt.Errorf("no Record found")
+			return dto.Transaction{}, fmt.Errorf("no Record found")
 		}
-		return "", fmt.Errorf("something went wrong")
+		return dto.Transaction{}, fmt.Errorf("something went wrong")
 	}
-	resStr := fmt.Sprintf("\n Current Balance : %.2f", balance)
-
 	TotalBal := balance + req.Amount
 
-	stmt, err := db.DB.Prepare(`UPDATE account SET balance=? WHERE acc_no=?`)
+	stmt, err := QueryExecuter.Prepare(`UPDATE account SET balance=? WHERE acc_no=? AND user_id=?`)
 	if err != nil {
-		return "", fmt.Errorf("errror While inserting CreateAccount data in db")
+		return dto.Transaction{}, fmt.Errorf("errror While inserting CreateAccount data in db")
 	}
-	stmt.Exec(TotalBal, req.Account_no)
-	resStr += "\n*** Money Deposited Successfully ***"
-	resStr += fmt.Sprintf("\n New Total Balance : %.2f", TotalBal)
-	return resStr, nil
+	stmt.Exec(TotalBal, req.Account_no, user_id)
+
+	// resStr += "\n*** Money Deposited Successfully ***"
+	// resStr += fmt.Sprintf("\n New Total Balance : %.2f", TotalBal)
+	res.Account_no = req.Account_no
+	res.Amount = TotalBal
+	return res, nil
 }
 
-func (db *AccountStore) WithdrawalMoney(req dto.Transaction) (response string, err error) {
+func (db *AccountStore) WithdrawalMoney(req dto.Transaction, user_id int) (dto.Transaction, error) {
 
 	//For Withdrawal
+	QueryExecuter := db.initiateQueryExecutor(db.DB)
 	var balance float64
-	row := db.DB.QueryRow("SELECT balance FROM account WHERE acc_no = ?", req.Account_no)
-	err = row.Scan(&balance)
+	row := QueryExecuter.QueryRow("SELECT balance FROM account WHERE acc_no = ? AND user_id=?", req.Account_no, user_id)
+	err := row.Scan(&balance)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			fmt.Println("No record found !!")
-			return
+			return dto.Transaction{}, fmt.Errorf("no record found")
 		}
-		return
+		return dto.Transaction{}, fmt.Errorf("something went wrong")
 	}
 	if balance < req.Amount {
-		return "", fmt.Errorf("insufficient balance")
+		return dto.Transaction{}, fmt.Errorf("insufficient balance")
 	}
-	resStr := fmt.Sprintf("\n Current Balance : %.2f", balance)
-
+	//resStr := fmt.Sprintf("\n Previous Balance : %.2f", balance)
 	TotalBal := balance - req.Amount
 
-	stmt, err := db.DB.Prepare(`UPDATE account SET balance=? WHERE acc_no=?`)
+	stmt, err := QueryExecuter.Prepare(`UPDATE account SET balance=? WHERE acc_no=? AND user_id=?`)
 	if err != nil {
-		return "", fmt.Errorf("errror While inserting CreateAccount data in db")
+		return dto.Transaction{}, fmt.Errorf("errror While inserting CreateAccount data in db")
 	}
-	stmt.Exec(TotalBal, req.Account_no)
+	stmt.Exec(TotalBal, req.Account_no, user_id)
 
-	resStr += "\n*** Money Withdrawal Successfully ***"
-	resStr += fmt.Sprintf("\n New Total Balance : %.2f", TotalBal)
-	return resStr, nil
+	// resStr += "\n*** Money Withdrawal Successfully ***"
+	// resStr += fmt.Sprintf("\n New Total Balance : %.2f", TotalBal)
+	var res dto.Transaction
+	res.Account_no = req.Account_no
+	res.Amount = TotalBal
+	return res, nil
 }

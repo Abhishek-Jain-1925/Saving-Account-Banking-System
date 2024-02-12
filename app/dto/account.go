@@ -3,6 +3,7 @@ package dto
 import "fmt"
 
 type CreateAccountReq struct {
+	Account_no   int     `json:"acc_no,omitempty"`
 	User_id      int     `json:"user_id"`
 	Branch_id    int     `json:"branch_id"`
 	Account_type string  `json:"acc_type"`

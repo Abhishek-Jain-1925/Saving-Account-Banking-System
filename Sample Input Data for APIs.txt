@@ -1,22 +1,21 @@
 //Signup
 {
-	"name":"Abhishek Jain",
-	"mobile":"9696969696",
-	"email":"abhishek1925@gmail.com",
-	"password":"Aavej@4264",
-	"address":"Pune,MH",
+	"name":"Rushi Markad",
+	"mobile":"9595502121",
+	"email":"rushi100@gmail.com",
+	"password":"rushi@123",
+	"address":"PUNE,MH",
 	"role":"Customer"
 }
 
 //Login
 {
-	"username":"abc@gmail.com",
-	"password":"Abhi@1925"
+	"username":"aavej4264@gmail.com",
+	"password":"Aavej@4264"
 }
 
 //For Update User
 {
-  "user_id":1,
   "name":"Abhishek Jain",
   "address":"BMT",
   "password":"Abhi@1925",
@@ -25,7 +24,6 @@
 
 //Create Bank Account
 {
-  "user_id":1,
   "branch_id":1001,
   "acc_type":"Savings",
   "balance":500.00
@@ -33,12 +31,13 @@
 
 //Delete Account
 {
-  "user_id":1,
   "acc_no":101
 }
 
 //Debit / Credit Money
-{
-  "acc_no":100,
-  "amount":1500.00
-}
+  {
+    "acc_no":100,
+    "amount":1500.00
+  }
+
+//Update user at Admin Level
