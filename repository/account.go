@@ -124,7 +124,6 @@ func (db *AccountStore) WithdrawalMoney(req dto.Transaction, user_id int) (dto.T
 	err := row.Scan(&balance)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			fmt.Println("No record found !!")
 			return dto.Transaction{}, fmt.Errorf("no record found")
 		}
 		return dto.Transaction{}, fmt.Errorf("something went wrong")

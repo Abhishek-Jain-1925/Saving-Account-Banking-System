@@ -95,6 +95,9 @@ func (us *service) CreateLogin(ctx context.Context, req dto.CreateLoginRequest) 
 
 func (us *service) CreateSignup(ctx context.Context, req dto.CreateUser) (dto.Response, error) {
 	tx, err := us.UserRepo.BeginTx(ctx)
+	if err != nil {
+		return dto.Response{}, err
+	}
 
 	response, err := us.UserRepo.AddUser(req)
 	if err != nil {
@@ -113,6 +116,9 @@ func (us *service) CreateSignup(ctx context.Context, req dto.CreateUser) (dto.Re
 
 func (us *service) UpdateUser(ctx context.Context, req dto.UpdateUser, user_id int) (dto.UpdateUser, error) {
 	tx, err := us.UserRepo.BeginTx(ctx)
+	if err != nil {
+		return dto.UpdateUser{}, err
+	}
 
 	response, err := us.UserRepo.UpdateUser(req, user_id)
 	if err != nil {

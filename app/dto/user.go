@@ -3,6 +3,8 @@ package dto
 import (
 	"fmt"
 	"regexp"
+	"strings"
+	"unicode"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -46,12 +48,27 @@ type Response struct {
 	Role     string `json:"role"`
 }
 
+type Error struct {
+	Error_code int    `json:"error_code"`
+	Error_msg  string `json:"error_description"`
+}
+
+type Role string
+
+const (
+	Customer Role = "Customer"
+	Admin    Role = "Admin"
+)
+
 func (req *CreateLoginRequest) Validate() error {
 	if len(req.Username) <= 0 || len(req.Password) <= 0 {
 		return fmt.Errorf("please provide anything as input")
 	}
-	if len(req.Password) < 3 && len(req.Password) > 16 {
-		return fmt.Errorf("length of the password field must be in 3 to 16 chars")
+	if !isValidEmail(req.Username) {
+		return fmt.Errorf("please provide a proper Email credentials")
+	}
+	if !isValidPassword(req.Password) {
+		return fmt.Errorf("please provide a proper password credentials")
 	}
 	return nil
 }
@@ -78,17 +95,49 @@ func (req *CreateUser) ValidateUser() error {
 	if len(req.Mobile) <= 0 {
 		return fmt.Errorf("mobile field cannot be empty")
 	}
-	if len(req.Role) <= 0 || (req.Role != "Customer" && req.Role != "Admin") {
-		return fmt.Errorf("please provide a proper role field")
+	if len(req.Mobile) != 10 {
+		return fmt.Errorf("mobile field must be of 10 digits only")
 	}
-
+	// Check each character is a digit
+	for _, char := range req.Mobile {
+		if !unicode.IsDigit(char) {
+			return fmt.Errorf("mobile field must be contains digits only")
+		}
+	}
+	if len(req.Role) <= 0 || (strings.EqualFold(req.Role, "Customer") && strings.EqualFold(req.Role, "Admin")) {
+		return fmt.Errorf("role field can't be empty")
+	}
+	if !isValidateRole(Role(req.Role)) {
+		return fmt.Errorf(" invalid role, accepted roles are customer and admin only")
+	}
+	if !isValidPassword(req.Password) {
+		return fmt.Errorf("please provide a proper password credentials")
+	}
 	return nil
 }
 
+func isValidateRole(role Role) bool {
+	switch role {
+	case Customer, Admin:
+		return true
+	default:
+		return false
+	}
+}
+
 func isValidEmail(email string) bool {
-	//a basic check
+	// Basic Checks
 	regex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
-	return regexp.MustCompile(regex).MatchString(email)
+	if !regexp.MustCompile(regex).MatchString(email) {
+		return false
+	}
+	if strings.Contains(email, " ") {
+		return false
+	}
+	if strings.Count(email, "@") != 1 {
+		return false
+	}
+	return true
 }
 
 func (req *UpdateUser) ValidateUpdate() error {
@@ -108,4 +157,30 @@ func (req *UpdateUser) ValidateUpdate() error {
 		return fmt.Errorf("mobile field cannot be empty")
 	}
 	return nil
+}
+
+// Password must contain at least one uppercase letter, one lowercase letter,
+// one digit, and one special character
+func isValidPassword(password string) bool {
+	if len(password) < 6 {
+		return false
+	}
+
+	containsUpperCase := false
+	containsLowerCase := false
+	containsDigit := false
+	containsSpecialChar := false
+
+	for _, char := range password {
+		if unicode.IsUpper(char) {
+			containsUpperCase = true
+		} else if unicode.IsLower(char) {
+			containsLowerCase = true
+		} else if unicode.IsDigit(char) {
+			containsDigit = true
+		} else if !unicode.IsSpace(char) {
+			containsSpecialChar = true
+		}
+	}
+	return containsUpperCase && containsLowerCase && containsDigit && containsSpecialChar
 }

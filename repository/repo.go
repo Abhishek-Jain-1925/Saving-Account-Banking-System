@@ -13,6 +13,11 @@ type BaseRepository struct {
 	DB *sql.DB
 }
 
+type Transaction interface {
+	Commit() error
+	Rollback() error
+}
+
 type RepositoryTrasanctions interface {
 	initiateQueryExecutor(tx *sql.DB) *sql.DB
 	BeginTx(ctx context.Context) (tx *sql.Tx, err error)
@@ -55,7 +60,6 @@ func (repo *BaseRepository) HandleTransaction(ctx context.Context, tx *sql.Tx, i
 		}
 		return
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		return
@@ -64,8 +68,6 @@ func (repo *BaseRepository) HandleTransaction(ctx context.Context, tx *sql.Tx, i
 }
 
 func (repo *BaseRepository) initiateQueryExecutor(tx *sql.DB) *sql.DB {
-	//Populate the query executor so we can join/use a transaction if one is present.
-	//If we are not running inside a transaction then the plain *sql.DB object is used.
 	executor := repo.DB
 	if tx != nil {
 		executor = tx

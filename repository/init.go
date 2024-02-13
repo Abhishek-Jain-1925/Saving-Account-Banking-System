@@ -31,9 +31,9 @@ func InitializeDB() (*sql.DB, error) {
 		user_id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name VARCHAR(30) NOT NULL,
 		address VARCHAR(50) NOT NULL,
-		email VARCHAR(30) NOT NULL,
+		email VARCHAR(30) UNIQUE NOT NULL,
 		password VARCHAR(100) NOT NULL,
-		mobile CHAR(10) NOT NULL,
+		mobile CHAR(10) UNIQUE NOT NULL,
 		role VARCHAR(10) NOT NULL,
 		created_at INTEGER NOT NULL,
 		updated_at INTEGER NOT NULL

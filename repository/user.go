@@ -132,7 +132,7 @@ func (db *UserStore) UpdateUser(req dto.UpdateUser, user_id int) (dto.UpdateUser
 
 	_, err = stmt.Exec(req.Name, req.Address, string(hashPwd), req.Mobile, time.Now().Unix(), user_id)
 	if err != nil {
-		return dto.UpdateUser{}, fmt.Errorf("error executing update statement: %v", err)
+		return dto.UpdateUser{}, fmt.Errorf("error executing update statement at user level, Error: %v", err)
 	}
 
 	var res dto.UpdateUser
