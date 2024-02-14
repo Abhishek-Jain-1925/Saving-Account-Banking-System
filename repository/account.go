@@ -29,12 +29,21 @@ func NewAccountRepo(db *sql.DB) AccountStorer {
 	}
 }
 
+const (
+	getTopAccNo               string = "SELECT MAX(acc_no) FROM account"
+	insertAccountDetailsQuery string = `INSERT INTO account VALUES(?,?,?,?,?,?,?)`
+	getUserIdQuery            string = "SELECT user_id FROM account where acc_no=? AND user_id=?"
+	deleteAccQuery            string = `DELETE FROM account WHERE acc_no=? AND user_id=?`
+	getExBalanceQuery         string = "SELECT balance FROM account WHERE acc_no = ? AND user_id=?"
+	transactionQuery          string = `UPDATE account SET balance=? WHERE acc_no=? AND user_id=?`
+)
+
 func (db *AccountStore) CreateAccount(req dto.CreateAccountReq, user_id int) (dto.CreateAccountReq, error) {
 
 	//To get Existing value
 	var count int64
 	QueryExecuter := db.initiateQueryExecutor(db.DB)
-	row := QueryExecuter.QueryRow("SELECT MAX(acc_no) FROM account")
+	row := QueryExecuter.QueryRow(getTopAccNo)
 	err := row.Scan(&count)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -42,7 +51,7 @@ func (db *AccountStore) CreateAccount(req dto.CreateAccountReq, user_id int) (dt
 		}
 	}
 	//For Inserting
-	stmt, err := QueryExecuter.Prepare(`INSERT INTO account VALUES(?,?,?,?,?,?,?)`)
+	stmt, err := QueryExecuter.Prepare(insertAccountDetailsQuery)
 	if err != nil {
 		return dto.CreateAccountReq{}, fmt.Errorf("errror While inserting CreateAccount data in db")
 	}
@@ -62,7 +71,7 @@ func (db *AccountStore) CreateAccount(req dto.CreateAccountReq, user_id int) (dt
 func (db *AccountStore) DeleteAccount(req dto.DeleteAccountReq, user_id int) (dto.DeleteAccount, error) {
 	var count int64
 	QueryExecuter := db.initiateQueryExecutor(db.DB)
-	row := QueryExecuter.QueryRow("SELECT user_id FROM account where acc_no=? AND user_id=?", req.Account_no, user_id)
+	row := QueryExecuter.QueryRow(getUserIdQuery, req.Account_no, user_id)
 	err := row.Scan(&count)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -72,7 +81,7 @@ func (db *AccountStore) DeleteAccount(req dto.DeleteAccountReq, user_id int) (dt
 	}
 
 	//For Inserting
-	stmt, err := QueryExecuter.Prepare(`DELETE FROM account WHERE acc_no=? AND user_id=?`)
+	stmt, err := QueryExecuter.Prepare(deleteAccQuery)
 	if err != nil {
 		return dto.DeleteAccount{}, fmt.Errorf("errror While deleting data from db")
 	}
@@ -88,7 +97,7 @@ func (db *AccountStore) DepositMoney(req dto.Transaction, user_id int) (dto.Tran
 	QueryExecuter := db.initiateQueryExecutor(db.DB)
 	var balance float64
 
-	row := QueryExecuter.QueryRow("SELECT balance FROM account WHERE acc_no = ? AND user_id=?", req.Account_no, user_id)
+	row := QueryExecuter.QueryRow(getExBalanceQuery, req.Account_no, user_id)
 	err := row.Scan(&balance)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -98,7 +107,7 @@ func (db *AccountStore) DepositMoney(req dto.Transaction, user_id int) (dto.Tran
 	}
 	TotalBal := balance + req.Amount
 
-	stmt, err := QueryExecuter.Prepare(`UPDATE account SET balance=? WHERE acc_no=? AND user_id=?`)
+	stmt, err := QueryExecuter.Prepare(transactionQuery)
 	if err != nil {
 		return dto.TransactionResponse{}, fmt.Errorf("errror While inserting CreateAccount data in db")
 	}
@@ -115,7 +124,7 @@ func (db *AccountStore) WithdrawalMoney(req dto.Transaction, user_id int) (dto.T
 	//For Withdrawal
 	QueryExecuter := db.initiateQueryExecutor(db.DB)
 	var balance float64
-	row := QueryExecuter.QueryRow("SELECT balance FROM account WHERE acc_no = ? AND user_id=?", req.Account_no, user_id)
+	row := QueryExecuter.QueryRow(getExBalanceQuery, req.Account_no, user_id)
 	err := row.Scan(&balance)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -129,7 +138,7 @@ func (db *AccountStore) WithdrawalMoney(req dto.Transaction, user_id int) (dto.T
 	}
 	TotalBal := balance - req.Amount
 
-	stmt, err := QueryExecuter.Prepare(`UPDATE account SET balance=? WHERE acc_no=? AND user_id=?`)
+	stmt, err := QueryExecuter.Prepare(transactionQuery)
 	if err != nil {
 		return dto.TransactionResponse{}, fmt.Errorf("errror While inserting CreateAccount data in db")
 	}

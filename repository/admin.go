@@ -27,12 +27,17 @@ func NewAdminRepo(db *sql.DB) AdminStorer {
 	}
 }
 
+const (
+	getUserDetailsQuery string = `SELECT user_id, name, address, email, password, mobile, role FROM user ORDER BY user_id DESC`
+	userUpdateQuery     string = `UPDATE user SET name=?, address=?,email=?, password=?, mobile=?,role=?, updated_at=? WHERE user_id=?`
+)
+
 func (db *AdminStore) ListUsers(ctx context.Context) ([]dto.Response, error) {
 	var result []dto.Response
 
 	//To get All user values
 	QueryExecuter := db.initiateQueryExecutor(db.DB)
-	rows, err := QueryExecuter.Query("SELECT user_id, name, address, email, password, mobile, role FROM user ORDER BY user_id DESC")
+	rows, err := QueryExecuter.Query(getUserDetailsQuery)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -52,7 +57,7 @@ func (db *AdminStore) ListUsers(ctx context.Context) ([]dto.Response, error) {
 func (db *AdminStore) UpdateUserInfo(req dto.UpdateUserInfo) (dto.UpdateUserInfo, error) {
 	// For Updating User Info.
 	QueryExecuter := db.initiateQueryExecutor(db.DB)
-	stmt, err := QueryExecuter.Prepare(`UPDATE user SET name=?, address=?,email=?, password=?, mobile=?,role=?, updated_at=? WHERE user_id=?`)
+	stmt, err := QueryExecuter.Prepare(userUpdateQuery)
 	if err != nil {
 		return dto.UpdateUserInfo{}, fmt.Errorf("error while updating user data in db: %v", err)
 	}

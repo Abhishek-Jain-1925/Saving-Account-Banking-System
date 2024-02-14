@@ -15,6 +15,14 @@ type UserStore struct {
 	BaseRepository
 }
 
+const (
+	insertUserQuery      string = "INSERT INTO user VALUES(?,?,?,?,?,?,?,?,?)"
+	updateUserQuery      string = `UPDATE user SET name=?, address=?, password=?, mobile=?, updated_at=? WHERE user_id=?`
+	getTokenDetailsQuery string = "SELECT user_id,role FROM user where email=?"
+	getLoginDetails      string = "SELECT email, password FROM user"
+	getCountofUser       string = "SELECT COUNT(user_id) FROM user"
+)
+
 type UserStorer interface {
 	RepositoryTrasanctions
 
@@ -33,7 +41,7 @@ func NewUserRepo(db *sql.DB) UserStorer {
 
 func (db *UserStore) GetLoginDetails() (response map[string]string, err error) {
 	QueryExecuter := db.initiateQueryExecutor(db.DB)
-	rows, err := QueryExecuter.Query("SELECT email, password FROM user")
+	rows, err := QueryExecuter.Query(getLoginDetails)
 	if err != nil {
 		log.Print("error while fetching login details from database: ", err)
 		return nil, fmt.Errorf("error while fetching login details from database")
@@ -58,7 +66,7 @@ func (db *UserStore) AddUser(req dto.CreateUser) (dto.Response, error) {
 	//To get Existing value
 	var count int64
 	QueryExecuter := db.initiateQueryExecutor(db.DB)
-	row := QueryExecuter.QueryRow("SELECT COUNT(user_id) FROM user")
+	row := QueryExecuter.QueryRow(getCountofUser)
 	err := row.Scan(&count)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -74,7 +82,7 @@ func (db *UserStore) AddUser(req dto.CreateUser) (dto.Response, error) {
 	}
 
 	//For Inserting
-	stmt, err := QueryExecuter.Prepare(`INSERT INTO user VALUES(?,?,?,?,?,?,?,?,?)`)
+	stmt, err := QueryExecuter.Prepare(insertUserQuery)
 	if err != nil {
 		return dto.Response{}, fmt.Errorf("errror While inserting sign-up data in db")
 	}
@@ -96,7 +104,7 @@ func (db *UserStore) AddUser(req dto.CreateUser) (dto.Response, error) {
 func (db *UserStore) UpdateUser(req dto.UpdateUser, user_id int) (dto.UpdateUser, error) {
 	// For Updating User Info.
 	QueryExecuter := db.initiateQueryExecutor(db.DB)
-	stmt, err := QueryExecuter.Prepare(`UPDATE user SET name=?, address=?, password=?, mobile=?, updated_at=? WHERE user_id=?`)
+	stmt, err := QueryExecuter.Prepare(updateUserQuery)
 	if err != nil {
 		return dto.UpdateUser{}, fmt.Errorf("error while updating user data in db: %v", err)
 	}
@@ -119,7 +127,7 @@ func (db *UserStore) UpdateUser(req dto.UpdateUser, user_id int) (dto.UpdateUser
 
 func (db *UserStore) TokenDetails(email string) (user_id int, role string, err error) {
 	QueryExecuter := db.initiateQueryExecutor(db.DB)
-	row := QueryExecuter.QueryRow("SELECT user_id,role FROM user where email=?", email)
+	row := QueryExecuter.QueryRow(getTokenDetailsQuery, email)
 	err = row.Scan(&user_id, &role)
 	if err != nil {
 		if err == sql.ErrNoRows {
