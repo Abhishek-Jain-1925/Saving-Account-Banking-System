@@ -17,9 +17,9 @@ type service struct {
 type Service interface {
 	Authenticate(tknStr string) (user_id int, response string, err error)
 	CreateAccount(ctx context.Context, req dto.CreateAccountReq, user_id int) (dto.CreateAccountReq, error)
-	DeleteAccount(ctx context.Context, req dto.DeleteAccountReq, user_id int) (res string, err error)
-	DepositMoney(ctx context.Context, req dto.Transaction, user_id int) (dto.Transaction, error)
-	WithdrawalMoney(ctx context.Context, req dto.Transaction, user_id int) (dto.Transaction, error)
+	DeleteAccount(ctx context.Context, req dto.DeleteAccountReq, user_id int) (dto.DeleteAccount, error)
+	DepositMoney(ctx context.Context, req dto.Transaction, user_id int) (dto.TransactionResponse, error)
+	WithdrawalMoney(ctx context.Context, req dto.Transaction, user_id int) (dto.TransactionResponse, error)
 }
 
 func NewService(AccountRepo repository.AccountStorer) Service {
@@ -48,7 +48,9 @@ func (us *service) Authenticate(tknStr string) (user_id int, response string, er
 }
 
 func (as *service) CreateAccount(ctx context.Context, req dto.CreateAccountReq, user_id int) (dto.CreateAccountReq, error) {
-	tx, err := as.AccountRepo.BeginTx(ctx)
+
+	tx, _ := as.AccountRepo.BeginTx(ctx)
+
 	response, err := as.AccountRepo.CreateAccount(req, user_id)
 	if err != nil {
 		return dto.CreateAccountReq{}, err
@@ -64,12 +66,13 @@ func (as *service) CreateAccount(ctx context.Context, req dto.CreateAccountReq, 
 	return response, nil
 }
 
-func (as *service) DeleteAccount(ctx context.Context, req dto.DeleteAccountReq, user_id int) (res string, err error) {
+func (as *service) DeleteAccount(ctx context.Context, req dto.DeleteAccountReq, user_id int) (dto.DeleteAccount, error) {
 
-	tx, err := as.AccountRepo.BeginTx(ctx)
+	tx, _ := as.AccountRepo.BeginTx(ctx)
+
 	response, err := as.AccountRepo.DeleteAccount(req, user_id)
 	if err != nil {
-		return "", err
+		return dto.DeleteAccount{}, err
 	}
 
 	defer func() {
@@ -82,12 +85,13 @@ func (as *service) DeleteAccount(ctx context.Context, req dto.DeleteAccountReq, 
 	return response, nil
 }
 
-func (as *service) DepositMoney(ctx context.Context, req dto.Transaction, user_id int) (dto.Transaction, error) {
+func (as *service) DepositMoney(ctx context.Context, req dto.Transaction, user_id int) (dto.TransactionResponse, error) {
 
-	tx, err := as.AccountRepo.BeginTx(ctx)
+	tx, _ := as.AccountRepo.BeginTx(ctx)
+
 	response, err := as.AccountRepo.DepositMoney(req, user_id)
 	if err != nil {
-		return dto.Transaction{}, err
+		return dto.TransactionResponse{}, err
 	}
 
 	defer func() {
@@ -100,12 +104,13 @@ func (as *service) DepositMoney(ctx context.Context, req dto.Transaction, user_i
 	return response, nil
 }
 
-func (as *service) WithdrawalMoney(ctx context.Context, req dto.Transaction, user_id int) (dto.Transaction, error) {
+func (as *service) WithdrawalMoney(ctx context.Context, req dto.Transaction, user_id int) (dto.TransactionResponse, error) {
 
-	tx, err := as.AccountRepo.BeginTx(ctx)
+	tx, _ := as.AccountRepo.BeginTx(ctx)
+
 	response, err := as.AccountRepo.WithdrawalMoney(req, user_id)
 	if err != nil {
-		return dto.Transaction{}, err
+		return dto.TransactionResponse{}, err
 	}
 
 	defer func() {

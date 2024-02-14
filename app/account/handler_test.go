@@ -25,16 +25,16 @@ func (m *mockAccountService) CreateAccount(ctx context.Context, req dto.CreateAc
 	return dto.CreateAccountReq{}, nil
 }
 
-func (m *mockAccountService) DepositMoney(ctx context.Context, req dto.Transaction, userID int) (dto.Transaction, error) {
-	return dto.Transaction{}, nil
+func (m *mockAccountService) DepositMoney(ctx context.Context, req dto.Transaction, userID int) (dto.TransactionResponse, error) {
+	return dto.TransactionResponse{}, nil
 }
 
-func (m *mockAccountService) WithdrawalMoney(ctx context.Context, req dto.Transaction, userID int) (dto.Transaction, error) {
-	return dto.Transaction{}, nil
+func (m *mockAccountService) WithdrawalMoney(ctx context.Context, req dto.Transaction, userID int) (dto.TransactionResponse, error) {
+	return dto.TransactionResponse{}, nil
 }
 
-func (m *mockAccountService) DeleteAccount(ctx context.Context, req dto.DeleteAccountReq, userID int) (string, error) {
-	return "", nil
+func (m *mockAccountService) DeleteAccount(ctx context.Context, req dto.DeleteAccountReq, userID int) (dto.DeleteAccount, error) {
+	return dto.DeleteAccount{}, nil
 }
 
 func TestCreateHandler(t *testing.T) {

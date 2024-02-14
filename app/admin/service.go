@@ -9,6 +9,7 @@ import (
 	"github.com/Abhishek-Jain-1925/Saving-Account-Banking-System/app/dto"
 	"github.com/Abhishek-Jain-1925/Saving-Account-Banking-System/repository"
 	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type service struct {
@@ -73,6 +74,12 @@ func (us *service) UpdateUser(ctx context.Context, req dto.UpdateUserInfo) (dto.
 	if err != nil {
 		return dto.UpdateUserInfo{}, fmt.Errorf(err.Error())
 	}
+
+	hashPwd, err := bcrypt.GenerateFromPassword([]byte(req.Password), 10)
+	if err != nil {
+		return dto.UpdateUserInfo{}, fmt.Errorf(err.Error())
+	}
+	req.Password = string(hashPwd)
 
 	response, err := us.AdminRepo.UpdateUserInfo(req)
 	if err != nil {

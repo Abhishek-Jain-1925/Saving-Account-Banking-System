@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/Abhishek-Jain-1925/Saving-Account-Banking-System/app/dto"
@@ -14,8 +15,6 @@ type UserStore struct {
 	BaseRepository
 }
 
-// All User related DB activity like sigup,list,signup,update
-// have to specify methods in interface then perform operations
 type UserStorer interface {
 	RepositoryTrasanctions
 
@@ -24,19 +23,6 @@ type UserStorer interface {
 	UpdateUser(req dto.UpdateUser, user_id int) (dto.UpdateUser, error)
 
 	TokenDetails(email string) (user_id int, role string, err error)
-}
-
-// All info want to process on DB
-type User struct {
-	User_id    int
-	Name       string
-	Address    string
-	Email      string
-	Password   string
-	Mobile     string
-	Role       string
-	Created_at int
-	Updated_at int
 }
 
 func NewUserRepo(db *sql.DB) UserStorer {
@@ -72,7 +58,7 @@ func (db *UserStore) AddUser(req dto.CreateUser) (dto.Response, error) {
 	//To get Existing value
 	var count int64
 	QueryExecuter := db.initiateQueryExecutor(db.DB)
-	row := QueryExecuter.QueryRow("SELECT MAX(user_id) FROM user")
+	row := QueryExecuter.QueryRow("SELECT COUNT(user_id) FROM user")
 	err := row.Scan(&count)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -93,35 +79,21 @@ func (db *UserStore) AddUser(req dto.CreateUser) (dto.Response, error) {
 		return dto.Response{}, fmt.Errorf("errror While inserting sign-up data in db")
 	}
 	user_id := count + 1
-	stmt.Exec(user_id, req.Name, req.Address, req.Email, string(hashPwd), req.Mobile, req.Role, time.Now().Unix(), time.Now().Unix())
+	stmt.Exec(user_id, req.Name, req.Address, req.Email, string(hashPwd), req.Mobile, strings.ToLower(req.Role), time.Now().Unix(), time.Now().Unix())
 
-	// resStr := "\n *** Signed Up Successfully ***"
-	// resStr += "\n\n Kindly Note following details -"
-	// resStr += fmt.Sprintf("\n- User ID : %v", (count + 1))
-	// resStr += fmt.Sprintf("\n- Email(username) : %v", req.Email)
-	// resStr += fmt.Sprintf("\n- Password : %v", req.Password)
-	// resStr += fmt.Sprintf("\n- Role : %v", req.Role)
-	// resStr += "\n\n*** You can login now. ***"
-
-	var res dto.Response
-	res.User_id = int(user_id)
-	res.Name = req.Name
-	res.Address = req.Address
-	res.Email = req.Email
-	res.Password = req.Password
-	res.Mobile = req.Mobile
-	res.Role = req.Role
-
+	res := dto.Response{
+		User_id:  int(user_id),
+		Name:     req.Name,
+		Address:  req.Address,
+		Email:    req.Email,
+		Password: req.Password,
+		Mobile:   req.Mobile,
+		Role:     req.Role,
+	}
 	return res, nil
 }
 
 func (db *UserStore) UpdateUser(req dto.UpdateUser, user_id int) (dto.UpdateUser, error) {
-	//Hashing of password
-	hashPwd, err := bcrypt.GenerateFromPassword([]byte(req.Password), 10)
-	if err != nil {
-		return dto.UpdateUser{}, fmt.Errorf(err.Error())
-	}
-
 	// For Updating User Info.
 	QueryExecuter := db.initiateQueryExecutor(db.DB)
 	stmt, err := QueryExecuter.Prepare(`UPDATE user SET name=?, address=?, password=?, mobile=?, updated_at=? WHERE user_id=?`)
@@ -130,18 +102,18 @@ func (db *UserStore) UpdateUser(req dto.UpdateUser, user_id int) (dto.UpdateUser
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(req.Name, req.Address, string(hashPwd), req.Mobile, time.Now().Unix(), user_id)
+	_, err = stmt.Exec(req.Name, req.Address, req.Password, req.Mobile, time.Now().Unix(), user_id)
 	if err != nil {
 		return dto.UpdateUser{}, fmt.Errorf("error executing update statement at user level, Error: %v", err)
 	}
 
-	var res dto.UpdateUser
-	res.User_id = user_id
-	res.Name = req.Name
-	res.Address = req.Address
-	res.Mobile = req.Mobile
-	res.Password = req.Password
-
+	res := dto.UpdateUser{
+		User_id:  user_id,
+		Name:     req.Name,
+		Address:  req.Address,
+		Mobile:   req.Mobile,
+		Password: req.Password,
+	}
 	return res, nil
 }
 
@@ -155,6 +127,5 @@ func (db *UserStore) TokenDetails(email string) (user_id int, role string, err e
 		}
 		return 0, "", fmt.Errorf("something went wrong")
 	}
-
 	return user_id, role, nil
 }

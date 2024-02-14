@@ -18,6 +18,8 @@ type Transaction interface {
 	Rollback() error
 }
 
+type MockTx struct{}
+
 type RepositoryTrasanctions interface {
 	initiateQueryExecutor(tx *sql.DB) *sql.DB
 	BeginTx(ctx context.Context) (tx *sql.Tx, err error)

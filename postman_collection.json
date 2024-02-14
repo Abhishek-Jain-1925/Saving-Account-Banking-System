@@ -1,0 +1,41 @@
+[{
+    "_comment": "Values for Signup",
+	"name":"John",
+	"mobile":"9090525356",
+	"email":"john@gmail.com",
+	"password":"John@123",
+	"address":"PUNE,MH",
+	"role":"Customer"
+},
+{
+    "_comment": "Values for Login",
+	"username":"john@gmail.com",
+	"password":"John@123"
+},
+{
+    "_comment": "Values for Create bank account",
+    "branch_id":1001,
+    "acc_type":"Savings",
+    "balance":500.00
+},
+{
+    "_comment": "Values for Deposit Money",
+    "acc_no":4,
+    "amount": 1000.00
+},
+{
+    "_comment": "Values for Withdrawal Money",
+    "acc_no":4,
+    "amount": 500.00
+},
+{
+    "_comment": "Values for Update User info By admin",
+    "user_id":1,
+    "name":"Abhishek Jain",
+    "address":"PUNE",
+    "email":"omkesh@gmail.com",
+    "password":"abhi@123",
+    "mobile":"9595901925",
+    "role":"Customer"
+}
+]

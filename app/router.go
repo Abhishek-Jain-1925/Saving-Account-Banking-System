@@ -18,16 +18,18 @@ func NewRouter(deps Dependencies) *mux.Router {
 	r.HandleFunc("/update_user", user.Update(deps.UserService)).Methods(http.MethodPut)
 
 	//Account Related Activity
-	r.HandleFunc("/account/create", account.Create(deps.AccountService)).Methods(http.MethodPost)
-	r.HandleFunc("/account/deposit", account.Deposit(deps.AccountService)).Methods(http.MethodPut)
-	r.HandleFunc("/account/withdrawal", account.Withdrawal(deps.AccountService)).Methods(http.MethodPut)
-	r.HandleFunc("/account/delete", account.Delete(deps.AccountService)).Methods(http.MethodDelete)
-	r.HandleFunc("account/statement", account.ViewStatement)
+	subrouter := r.PathPrefix("/account").Subrouter()
+	subrouter.HandleFunc("/create", account.Create(deps.AccountService)).Methods(http.MethodPost)
+	subrouter.HandleFunc("/deposit", account.Deposit(deps.AccountService)).Methods(http.MethodPut)
+	subrouter.HandleFunc("/withdrawal", account.Withdrawal(deps.AccountService)).Methods(http.MethodPut)
+	subrouter.HandleFunc("/delete", account.Delete(deps.AccountService)).Methods(http.MethodDelete)
+	subrouter.HandleFunc("/balance", account.ViewBalance(deps.AccountService)).Methods(http.MethodGet)
 
 	//Admin Side Activity
-	r.HandleFunc("admin/statement", account.ViewStatement)
-	r.HandleFunc("/admin/user_list", admin.ListUsers(deps.AdminService)).Methods(http.MethodGet)
-	r.HandleFunc("/admin/update_user", admin.Update(deps.AdminService)).Methods(http.MethodPut)
+	subrouter1 := r.PathPrefix("/admin").Subrouter()
+	//r.HandleFunc("admin/statement", account.ViewStatement)
+	subrouter1.HandleFunc("/user_list", admin.ListUsers(deps.AdminService)).Methods(http.MethodGet)
+	subrouter1.HandleFunc("/update_user", admin.Update(deps.AdminService)).Methods(http.MethodPut)
 
 	return r
 }

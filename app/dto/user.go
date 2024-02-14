@@ -48,16 +48,15 @@ type Response struct {
 	Role     string `json:"role"`
 }
 
-type Error struct {
-	Error_code int    `json:"error_code"`
-	Error_msg  string `json:"error_description"`
+type LoginToken struct {
+	IssuedToken string `json:"token"`
 }
 
 type Role string
 
 const (
-	Customer Role = "Customer"
-	Admin    Role = "Admin"
+	Customer Role = "customer"
+	Admin    Role = "admin"
 )
 
 func (req *CreateLoginRequest) Validate() error {
@@ -68,7 +67,7 @@ func (req *CreateLoginRequest) Validate() error {
 		return fmt.Errorf("please provide a proper Email credentials")
 	}
 	if !isValidPassword(req.Password) {
-		return fmt.Errorf("please provide a proper password credentials")
+		return fmt.Errorf("password should contains atleast one UpperCase,Lowercase letter, one special char and one digit")
 	}
 	return nil
 }
@@ -107,11 +106,11 @@ func (req *CreateUser) ValidateUser() error {
 	if len(req.Role) <= 0 || (strings.EqualFold(req.Role, "Customer") && strings.EqualFold(req.Role, "Admin")) {
 		return fmt.Errorf("role field can't be empty")
 	}
-	if !isValidateRole(Role(req.Role)) {
+	if !isValidateRole(Role(strings.ToLower(req.Role))) {
 		return fmt.Errorf(" invalid role, accepted roles are customer and admin only")
 	}
 	if !isValidPassword(req.Password) {
-		return fmt.Errorf("please provide a proper password credentials")
+		return fmt.Errorf("password should contains atleast one UpperCase,Lowercase letter, one special char and one digit")
 	}
 	return nil
 }
@@ -150,17 +149,23 @@ func (req *UpdateUser) ValidateUpdate() error {
 	if len(req.Password) <= 0 {
 		return fmt.Errorf("password field cannot be empty")
 	}
-	if len(req.Password) < 3 || len(req.Password) > 16 {
-		return fmt.Errorf("length of the password field must be between 3 and 16 characters")
+	if len(req.Password) < 6 {
+		return fmt.Errorf("length of the password field must be greater than 6 chars")
+	}
+	if !isValidPassword(req.Password) {
+		return fmt.Errorf("password should contains atleast one UpperCase,Lowercase letter, one special char and one digit")
 	}
 	if len(req.Mobile) <= 0 {
 		return fmt.Errorf("mobile field cannot be empty")
 	}
+	for _, char := range req.Mobile {
+		if !unicode.IsDigit(char) {
+			return fmt.Errorf("mobile field must be contains digits only")
+		}
+	}
 	return nil
 }
 
-// Password must contain at least one uppercase letter, one lowercase letter,
-// one digit, and one special character
 func isValidPassword(password string) bool {
 	if len(password) < 6 {
 		return false

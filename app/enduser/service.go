@@ -64,7 +64,7 @@ func (us *service) CreateLogin(ctx context.Context, req dto.CreateLoginRequest) 
 		return "", fmt.Errorf("invalid credentials")
 	}
 
-	expirationTime := time.Now().Add(time.Minute * 10)
+	expirationTime := time.Now().Add(time.Minute * 100)
 	//Getting Additional data from DB like user_id, role
 	uid, role, err := us.UserRepo.TokenDetails(req.Username)
 
@@ -119,6 +119,13 @@ func (us *service) UpdateUser(ctx context.Context, req dto.UpdateUser, user_id i
 	if err != nil {
 		return dto.UpdateUser{}, err
 	}
+
+	//Hashing of password
+	hashPwd, err := bcrypt.GenerateFromPassword([]byte(req.Password), 10)
+	if err != nil {
+		return dto.UpdateUser{}, fmt.Errorf(err.Error())
+	}
+	req.Password = string(hashPwd)
 
 	response, err := us.UserRepo.UpdateUser(req, user_id)
 	if err != nil {
