@@ -70,3 +70,66 @@ func Update(adminService Service) func(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+func CreateAccount(adminService Service) func(w http.ResponseWriter, r *http.Request) { //Post
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		tknStr := r.Header.Get("Authorization")
+		_, err := adminService.Authenticate(tknStr)
+		if err != nil {
+			dto.ErrorUnauthorizedAccess(err, w)
+			return
+		}
+
+		var req dto.CreateAccountReq
+		err = json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			dto.ErrorInternalServer(err, w)
+			return
+		}
+
+		err = req.Validate()
+		if err != nil {
+			dto.ErrorBadRequest(err, w)
+			return
+		}
+
+		result, err := adminService.CreateAccount(ctx, req)
+		if err != nil {
+			dto.ErrorBadRequest(err, w)
+			return
+		}
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			dto.ErrorInternalServer(err, w)
+			return
+		}
+	}
+}
+
+func ListBranches(AdminService Service) func(w http.ResponseWriter, r *http.Request) { //GET
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		tknStr := r.Header.Get("Authorization")
+		_, err := AdminService.Authenticate(tknStr)
+		if err != nil {
+			dto.ErrorUnauthorizedAccess(err, w)
+			return
+		}
+
+		resp, err := AdminService.ListBranches(ctx)
+		if err != nil {
+			dto.ErrorBadRequest(err, w)
+			return
+		}
+
+		err = json.NewEncoder(w).Encode(resp)
+		if err != nil {
+			dto.ErrorInternalServer(err, w)
+			return
+		}
+	}
+}

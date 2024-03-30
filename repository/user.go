@@ -21,6 +21,8 @@ const (
 	getTokenDetailsQuery string = "SELECT user_id,role FROM user where email=?"
 	getLoginDetails      string = "SELECT email, password FROM user"
 	getCountofUser       string = "SELECT COUNT(user_id) FROM user"
+	getUser string = "SELECT name, address, email, password, mobile, role FROM user where user_id=?"
+	GetMyAccounts string = "SELECT acc_no, branch_id, acc_type, balance FROM account WHERE user_id=? ORDER BY created_at "
 )
 
 type UserStorer interface {
@@ -29,6 +31,8 @@ type UserStorer interface {
 	GetLoginDetails() (response map[string]string, err error)
 	AddUser(req dto.CreateUser) (dto.Response, error)
 	UpdateUser(req dto.UpdateUser, user_id int) (dto.UpdateUser, error)
+	GetUser(user_id int) (dto.CreateUser, error)
+	GetMyAccounts(user_id int) ([]dto.GetMyAccounts, error)
 
 	TokenDetails(email string) (user_id int, role string, err error)
 }
@@ -104,7 +108,7 @@ func (db *UserStore) AddUser(req dto.CreateUser) (dto.Response, error) {
 func (db *UserStore) UpdateUser(req dto.UpdateUser, user_id int) (dto.UpdateUser, error) {
 	// For Updating User Info.
 	QueryExecuter := db.initiateQueryExecutor(db.DB)
-	stmt, err := QueryExecuter.Prepare(updateUserQuery)
+	stmt, err := QueryExecuter.Prepare(getUser)
 	if err != nil {
 		return dto.UpdateUser{}, fmt.Errorf("error while updating user data in db: %v", err)
 	}
@@ -123,6 +127,45 @@ func (db *UserStore) UpdateUser(req dto.UpdateUser, user_id int) (dto.UpdateUser
 		Password: req.Password,
 	}
 	return res, nil
+}
+
+func (db *UserStore) GetUser(user_id int) (dto.CreateUser, error) {
+	
+	QueryExecuter := db.initiateQueryExecutor(db.DB)
+	rows, err := QueryExecuter.Query(getUser, user_id)
+	if err != nil {
+		log.Println(err)
+		return dto.CreateUser{}, err
+	}
+
+	var res dto.CreateUser
+	for rows.Next() {
+		if err := rows.Scan(&res.Name, &res.Address, &res.Email, &res.Password, &res.Mobile, &res.Role); err != nil {
+			log.Print("error while scanning row: ", err)
+			continue
+		}
+	}
+	return res, nil
+}
+
+func (db *UserStore) GetMyAccounts(user_id int) ([]dto.GetMyAccounts, error) {
+	var result []dto.GetMyAccounts
+	QueryExecuter := db.initiateQueryExecutor(db.DB)
+	rows, err := QueryExecuter.Query(GetMyAccounts, user_id)
+	if err != nil {
+		log.Println(err)
+		return []dto.GetMyAccounts{}, err
+	}
+
+	for rows.Next() {
+		var res dto.GetMyAccounts
+		if err := rows.Scan(&res.Acc_no, &res.Branch_id, &res.Acc_Type, &res.Balance); err != nil {
+			log.Print("error while scanning row: ", err)
+			continue
+		}
+		result = append(result, res)
+	}
+	return result, nil
 }
 
 func (db *UserStore) TokenDetails(email string) (user_id int, role string, err error) {

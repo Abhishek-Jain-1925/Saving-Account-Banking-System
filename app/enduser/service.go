@@ -22,6 +22,8 @@ type Service interface {
 	CreateLogin(ctx context.Context, req dto.CreateLoginRequest) (res string, err error)
 	CreateSignup(ctx context.Context, req dto.CreateUser) (dto.Response, error)
 	UpdateUser(ctx context.Context, req dto.UpdateUser, user_id int) (dto.UpdateUser, error)
+	GetUser(ctx context.Context, user_id int) (dto.CreateUser, error)
+	GetMyAccounts(ctx context.Context, user_id int) ([]dto.GetMyAccounts, error)
 }
 
 func NewService(UserRepo repository.UserStorer) Service {
@@ -130,6 +132,48 @@ func (us *service) UpdateUser(ctx context.Context, req dto.UpdateUser, user_id i
 	response, err := us.UserRepo.UpdateUser(req, user_id)
 	if err != nil {
 		return dto.UpdateUser{}, err
+	}
+
+	defer func() {
+		txErr := us.UserRepo.HandleTransaction(ctx, tx, err)
+		if txErr != nil {
+			err = txErr
+			return
+		}
+	}()
+	return response, nil
+}
+
+func (us *service) GetUser(ctx context.Context, user_id int) (dto.CreateUser, error) {
+	tx, err :=  us.UserRepo.BeginTx(ctx)
+	if err != nil {
+		return dto.CreateUser{}, fmt.Errorf(err.Error())
+	}
+
+	response, err :=  us.UserRepo.GetUser(user_id)
+	if err != nil {
+		return dto.CreateUser{}, err
+	}
+
+	defer func() {
+		txErr := us.UserRepo.HandleTransaction(ctx, tx, err)
+		if txErr != nil {
+			err = txErr
+			return
+		}
+	}()
+	return response, nil
+}
+
+func (us *service) GetMyAccounts(ctx context.Context, user_id int) ([]dto.GetMyAccounts, error) {
+	tx, err :=  us.UserRepo.BeginTx(ctx)
+	if err != nil {
+		return []dto.GetMyAccounts{}, fmt.Errorf(err.Error())
+	}
+
+	response, err :=  us.UserRepo.GetMyAccounts(user_id)
+	if err != nil {
+		return []dto.GetMyAccounts{}, err
 	}
 
 	defer func() {

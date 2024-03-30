@@ -16,10 +16,11 @@ type service struct {
 
 type Service interface {
 	Authenticate(tknStr string) (user_id int, response string, err error)
-	CreateAccount(ctx context.Context, req dto.CreateAccountReq, user_id int) (dto.CreateAccountReq, error)
+	
 	DeleteAccount(ctx context.Context, req dto.DeleteAccountReq, user_id int) (dto.DeleteAccount, error)
 	DepositMoney(ctx context.Context, req dto.Transaction, user_id int) (dto.TransactionResponse, error)
 	WithdrawalMoney(ctx context.Context, req dto.Transaction, user_id int) (dto.TransactionResponse, error)
+	ViewBalance(ctx context.Context, req dto.TransactionResponse, user_id int) (dto.TransactionResponse, error) 
 }
 
 func NewService(AccountRepo repository.AccountStorer) Service {
@@ -47,24 +48,6 @@ func (us *service) Authenticate(tknStr string) (user_id int, response string, er
 	return claims.User_id, claims.Username, nil
 }
 
-func (as *service) CreateAccount(ctx context.Context, req dto.CreateAccountReq, user_id int) (dto.CreateAccountReq, error) {
-
-	tx, _ := as.AccountRepo.BeginTx(ctx)
-
-	response, err := as.AccountRepo.CreateAccount(req, user_id)
-	if err != nil {
-		return dto.CreateAccountReq{}, err
-	}
-
-	defer func() {
-		txErr := as.AccountRepo.HandleTransaction(ctx, tx, err)
-		if txErr != nil {
-			err = txErr
-			return
-		}
-	}()
-	return response, nil
-}
 
 func (as *service) DeleteAccount(ctx context.Context, req dto.DeleteAccountReq, user_id int) (dto.DeleteAccount, error) {
 
@@ -109,6 +92,25 @@ func (as *service) WithdrawalMoney(ctx context.Context, req dto.Transaction, use
 	tx, _ := as.AccountRepo.BeginTx(ctx)
 
 	response, err := as.AccountRepo.WithdrawalMoney(req, user_id)
+	if err != nil {
+		return dto.TransactionResponse{}, err
+	}
+
+	defer func() {
+		txErr := as.AccountRepo.HandleTransaction(ctx, tx, err)
+		if txErr != nil {
+			err = txErr
+			return
+		}
+	}()
+	return response, nil
+}
+
+func (as *service) ViewBalance(ctx context.Context, req dto.TransactionResponse, user_id int) (dto.TransactionResponse, error) {
+
+	tx, _ := as.AccountRepo.BeginTx(ctx)
+
+	response, err := as.AccountRepo.ViewBalance(req, user_id)
 	if err != nil {
 		return dto.TransactionResponse{}, err
 	}
