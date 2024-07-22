@@ -38,6 +38,7 @@ type UserStorer interface {
 }
 
 func NewUserRepo(db *sql.DB) UserStorer {
+	
 	return &UserStore{
 		BaseRepository: BaseRepository{db},
 	}

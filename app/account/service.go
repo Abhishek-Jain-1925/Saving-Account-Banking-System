@@ -68,15 +68,9 @@ func (as *service) DeleteAccount(ctx context.Context, req dto.DeleteAccountReq, 
 	return response, nil
 }
 
-func (as *service) DepositMoney(ctx context.Context, req dto.Transaction, user_id int) (dto.TransactionResponse, error) {
+func (as *service) DepositMoney(ctx context.Context, req dto.Transaction, user_id int) (response dto.TransactionResponse,err error) {
 
 	tx, _ := as.AccountRepo.BeginTx(ctx)
-
-	response, err := as.AccountRepo.DepositMoney(req, user_id)
-	if err != nil {
-		return dto.TransactionResponse{}, err
-	}
-
 	defer func() {
 		txErr := as.AccountRepo.HandleTransaction(ctx, tx, err)
 		if txErr != nil {
@@ -84,6 +78,12 @@ func (as *service) DepositMoney(ctx context.Context, req dto.Transaction, user_i
 			return
 		}
 	}()
+
+	response, err = as.AccountRepo.DepositMoney(req, user_id)
+	if err != nil {
+		return dto.TransactionResponse{}, err
+	}
+
 	return response, nil
 }
 

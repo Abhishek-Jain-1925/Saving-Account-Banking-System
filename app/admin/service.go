@@ -105,7 +105,8 @@ func (adm *service) CreateAccount(ctx context.Context, req dto.CreateAccountReq)
 	if err != nil {
 		return dto.CreateAccountReq{}, err
 	}
-	// dto.SendMail(response)
+	dto.SendMail(response)
+	
 
 	return response, nil
 }
