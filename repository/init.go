@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -13,11 +12,11 @@ var db *sql.DB
 
 func InitializeDB() (*sql.DB, error) {
 
-	//Load .env vars
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Print("error !! while loading env vars !! Due to : ", err)
-	}
+	// Load .env vars
+	// err := godotenv.Load(".env")
+	// if err != nil {
+	// 	log.Print("error !! while loading env vars !! Due to : ", err)
+	// }
 
 	database, err := sql.Open("sqlite3", "repository/bank.db")
 	if err != nil {
@@ -63,7 +62,7 @@ func InitializeDB() (*sql.DB, error) {
 	statement, err = db.Prepare(`
 	CREATE TABLE IF NOT EXISTS account(
 		acc_no INTEGER PRIMARY KEY,
-		user_id INTEGER NOT NULL,
+		user_id INTEGER NOT NULL UNIQUE,
 		branch_id INETGER NOT NULL,
 		acc_type VARCHAR(10) NOT NULL,
 		balance FLOAT NOT NULL,
@@ -102,7 +101,7 @@ func InitializeDB() (*sql.DB, error) {
 	return db, nil
 }
 
-func InsertSeedData(db *sql.DB) {
+func InsertSeedData() {
 	database, err := sql.Open("sqlite3", "repository/bank.db")
 	if err != nil {
 		log.Print("error !! while Connecting with database !!")

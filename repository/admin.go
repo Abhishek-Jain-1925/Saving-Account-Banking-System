@@ -18,7 +18,9 @@ type AdminStorer interface {
 	RepositoryTrasanctions
 
 	ListUsers(ctx context.Context) ([]dto.Response, error)
+	ListBranches(ctx context.Context) ([]dto.BranchDetails, error)
 	UpdateUserInfo(req dto.UpdateUserInfo) (dto.UpdateUserInfo, error)
+	CreateAccount(req dto.CreateAccountReq) (dto.CreateAccountReq, error)
 }
 
 func NewAdminRepo(db *sql.DB) AdminStorer {
@@ -30,7 +32,40 @@ func NewAdminRepo(db *sql.DB) AdminStorer {
 const (
 	getUserDetailsQuery string = `SELECT user_id, name, address, email, password, mobile, role FROM user ORDER BY user_id DESC`
 	userUpdateQuery     string = `UPDATE user SET name=?, address=?,email=?, password=?, mobile=?,role=?, updated_at=? WHERE user_id=?`
+	getBranchDetailsQuery string = `SELECT id, name, location FROM branch ORDER BY id`
 )
+
+
+
+func (db *AdminStore) CreateAccount(req dto.CreateAccountReq) (dto.CreateAccountReq, error) {
+
+	//To get Existing value
+	var count int64
+	QueryExecuter := db.initiateQueryExecutor(db.DB)
+	row := QueryExecuter.QueryRow(getTopAccNo)
+	err := row.Scan(&count)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			count = 100
+		}
+	}
+	//For Inserting
+	stmt, err := QueryExecuter.Prepare(insertAccountDetailsQuery)
+	if err != nil {
+		return dto.CreateAccountReq{}, fmt.Errorf("errror While inserting CreateAccount data in db")
+	}
+	acc_no := (count + 1)
+	stmt.Exec(acc_no, req.User_id, req.Branch_id, req.Account_type, req.Balance, time.Now().Unix(), time.Now().Unix())
+
+	res := dto.CreateAccountReq{
+		Account_no:   int(acc_no),
+		Account_type: req.Account_type,
+		Balance:      req.Balance,
+		Branch_id:    req.Branch_id,
+		User_id:      req.User_id,
+	}
+	return res, nil
+}
 
 func (db *AdminStore) ListUsers(ctx context.Context) ([]dto.Response, error) {
 	var result []dto.Response
@@ -74,7 +109,29 @@ func (db *AdminStore) UpdateUserInfo(req dto.UpdateUserInfo) (dto.UpdateUserInfo
 		Address:  req.Address,
 		Email:    req.Email,
 		Password: req.Password,
+		Mobile: req.Mobile,
 		Role:     req.Role,
 	}
 	return res, nil
+}
+
+func (db *AdminStore) ListBranches(ctx context.Context) ([]dto.BranchDetails, error) {
+	var result []dto.BranchDetails
+
+	QueryExecuter := db.initiateQueryExecutor(db.DB)
+	rows, err := QueryExecuter.Query(getBranchDetailsQuery)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	
+	for rows.Next() {
+		var res dto.BranchDetails
+		if err := rows.Scan(&res.Id, &res.Name, &res.Location); err != nil {
+			log.Print("error while getting branches: ", err)
+			continue
+		}
+		result = append(result, res)
+	}
+	return result, nil
 }

@@ -31,6 +31,7 @@ func main() {
 		log.Fatalln(err)
 	}
 	defer database.Close()
+	// repository.InsertSeedData()
 
 	// Initialize Service
 	services := app.NewServices(database)

@@ -3,7 +3,6 @@ package repository
 import (
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/Abhishek-Jain-1925/Saving-Account-Banking-System/app/dto"
 )
@@ -17,10 +16,11 @@ type AccountStore struct {
 type AccountStorer interface {
 	RepositoryTrasanctions
 
-	CreateAccount(req dto.CreateAccountReq, user_id int) (dto.CreateAccountReq, error)
+
 	DeleteAccount(req dto.DeleteAccountReq, user_id int) (dto.DeleteAccount, error)
 	DepositMoney(req dto.Transaction, user_id int) (dto.TransactionResponse, error)
 	WithdrawalMoney(req dto.Transaction, user_id int) (dto.TransactionResponse, error)
+	ViewBalance(req dto.TransactionResponse, user_id int) (dto.TransactionResponse, error)
 }
 
 func NewAccountRepo(db *sql.DB) AccountStorer {
@@ -38,35 +38,6 @@ const (
 	transactionQuery          string = `UPDATE account SET balance=? WHERE acc_no=? AND user_id=?`
 )
 
-func (db *AccountStore) CreateAccount(req dto.CreateAccountReq, user_id int) (dto.CreateAccountReq, error) {
-
-	//To get Existing value
-	var count int64
-	QueryExecuter := db.initiateQueryExecutor(db.DB)
-	row := QueryExecuter.QueryRow(getTopAccNo)
-	err := row.Scan(&count)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			count = 100
-		}
-	}
-	//For Inserting
-	stmt, err := QueryExecuter.Prepare(insertAccountDetailsQuery)
-	if err != nil {
-		return dto.CreateAccountReq{}, fmt.Errorf("errror While inserting CreateAccount data in db")
-	}
-	acc_no := (count + 1)
-	stmt.Exec(acc_no, user_id, req.Branch_id, req.Account_type, req.Balance, time.Now().Unix(), time.Now().Unix())
-
-	res := dto.CreateAccountReq{
-		Account_no:   int(acc_no),
-		Account_type: req.Account_type,
-		Balance:      req.Balance,
-		Branch_id:    req.Branch_id,
-		User_id:      user_id,
-	}
-	return res, nil
-}
 
 func (db *AccountStore) DeleteAccount(req dto.DeleteAccountReq, user_id int) (dto.DeleteAccount, error) {
 	var count int64
@@ -147,6 +118,27 @@ func (db *AccountStore) WithdrawalMoney(req dto.Transaction, user_id int) (dto.T
 	res := dto.TransactionResponse{
 		Account_no: req.Account_no,
 		Balance:    TotalBal,
+	}
+	return res, nil
+}
+
+
+func (db *AccountStore) ViewBalance(req dto.TransactionResponse, user_id int) (dto.TransactionResponse, error) {
+
+	QueryExecuter := db.initiateQueryExecutor(db.DB)
+	var balance float64
+	row := QueryExecuter.QueryRow(getExBalanceQuery, req.Account_no, user_id)
+	err := row.Scan(&balance)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return dto.TransactionResponse{}, fmt.Errorf("no record found")
+		}
+		return dto.TransactionResponse{}, fmt.Errorf("something went wrong")
+	}
+
+	res := dto.TransactionResponse{
+		Account_no: req.Account_no,
+		Balance:    balance,
 	}
 	return res, nil
 }

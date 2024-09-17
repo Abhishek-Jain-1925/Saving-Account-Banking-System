@@ -18,7 +18,9 @@ type service struct {
 type Service interface {
 	Authenticate(tknStr string) (response string, err error)
 	ListUsers(ctx context.Context) ([]dto.Response, error)
+	ListBranches(ctx context.Context) ([]dto.BranchDetails, error)
 	UpdateUser(ctx context.Context, req dto.UpdateUserInfo) (dto.UpdateUserInfo, error)
+	CreateAccount(ctx context.Context, req dto.CreateAccountReq) (dto.CreateAccountReq, error)
 }
 
 func NewService(AdminRepo repository.AdminStorer) Service {
@@ -27,7 +29,7 @@ func NewService(AdminRepo repository.AdminStorer) Service {
 	}
 }
 
-func (us *service) Authenticate(tknStr string) (response string, err error) {
+func (adm *service) Authenticate(tknStr string) (response string, err error) {
 
 	jwtkey := []byte(os.Getenv("jwtkey"))
 	claims := &dto.Claims{}
@@ -88,6 +90,40 @@ func (us *service) UpdateUser(ctx context.Context, req dto.UpdateUserInfo) (dto.
 
 	defer func() {
 		txErr := us.AdminRepo.HandleTransaction(ctx, tx, err)
+		if txErr != nil {
+			err = txErr
+			return
+		}
+	}()
+	return response, nil
+}
+
+func (adm *service) CreateAccount(ctx context.Context, req dto.CreateAccountReq) (dto.CreateAccountReq, error) {
+
+	response, err := adm.AdminRepo.CreateAccount(req)
+
+	if err != nil {
+		return dto.CreateAccountReq{}, err
+	}
+	dto.SendMail(response)
+	
+
+	return response, nil
+}
+
+func (adm *service) ListBranches(ctx context.Context) ([]dto.BranchDetails, error) {
+	tx, err := adm.AdminRepo.BeginTx(ctx)
+	if err != nil {
+		return nil, fmt.Errorf(err.Error())
+	}
+
+	response, err := adm.AdminRepo.ListBranches(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		txErr := adm.AdminRepo.HandleTransaction(ctx, tx, err)
 		if txErr != nil {
 			err = txErr
 			return

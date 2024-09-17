@@ -114,3 +114,55 @@ func Update(userService Service) func(w http.ResponseWriter, r *http.Request) { 
 		}
 	}
 }
+
+func GetUser(userService Service) func(w http.ResponseWriter, r *http.Request) { //PUT
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		tknStr := r.Header.Get("Authorization")
+
+		user_id, _, err := userService.Authenticate(tknStr)
+		if err != nil {
+			dto.ErrorUnauthorizedAccess(err, w)
+			return
+		}
+
+		result, err := userService.GetUser(ctx, user_id)
+		if err != nil {
+			dto.ErrorBadRequest(err, w)
+			return
+		}
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			dto.ErrorInternalServer(err, w)
+			return
+		}
+	}
+}
+
+func GetMyAccounts(userService Service) func(w http.ResponseWriter, r *http.Request) { //PUT
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		tknStr := r.Header.Get("Authorization")
+
+		user_id, _, err := userService.Authenticate(tknStr)
+		if err != nil {
+			dto.ErrorUnauthorizedAccess(err, w)
+			return
+		}
+
+		result, err := userService.GetMyAccounts(ctx, user_id)
+		if err != nil {
+			dto.ErrorBadRequest(err, w)
+			return
+		}
+
+		err = json.NewEncoder(w).Encode(result)
+		if err != nil {
+			dto.ErrorInternalServer(err, w)
+			return
+		}
+	}
+}

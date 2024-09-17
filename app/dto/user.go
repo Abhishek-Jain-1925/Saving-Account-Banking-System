@@ -48,6 +48,19 @@ type Response struct {
 	Role     string `json:"role"`
 }
 
+type BranchDetails struct{
+	Id int `json:"branch_id"`
+	Name string `json:"name"`
+	Location string `json:"location"`
+}
+
+type GetMyAccounts struct{
+	Acc_no int `json:"acc_no"`
+	Branch_id int `json:"branch_id"`
+	Acc_Type string `json:"acc_type"`
+	Balance float64 `json:"balance"`
+}
+
 type LoginToken struct {
 	IssuedToken string `json:"token"`
 }
@@ -90,6 +103,9 @@ func (req *CreateUser) ValidateUser() error {
 	}
 	if len(req.Password) < 3 || len(req.Password) > 16 {
 		return fmt.Errorf("length of the password field must be between 3 and 16 characters")
+	}
+	if strings.Contains(req.Password, " ") {
+		return fmt.Errorf("password cannot contain spaces")
 	}
 	if len(req.Mobile) <= 0 {
 		return fmt.Errorf("mobile field cannot be empty")
